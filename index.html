@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calcolatore Punteggio SF-36</title>
+    <style>
+        body { font-family: sans-serif; margin: 20px; background-color: #f9f9f9; }
+        h1, h2 { color: #333; }
+        table { width: 100%; border-collapse: collapse; margin-bottom: 20px; background-color: #fff; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        th, td { border: 1px solid #ccc; padding: 10px; text-align: left; vertical-align: top;}
+        th { background-color: #e9e9e9; font-weight: bold; }
+        td:first-child { font-weight: bold; width: 80px; } /* ID Domanda */
+        .input-col { width: 100px; text-align: center;}
+        input[type="number"], input[type="text"] {
+             width: 80px; padding: 8px; border: 1px solid #ccc; border-radius: 4px;
+             box-sizing: border-box; /* Include padding in width */
+             text-align: center;
+        }
+        input:invalid { border-color: red; } /* Stile per input non validi */
+        .question-text { width: 65%; }
+        .scale-info { font-size: 0.9em; color: #555; }
+        #scores { margin-top: 30px; padding: 15px; background-color: #fff; box-shadow: 0 2px 4px rgba(0,0,0,0.1); border-radius: 5px;}
+        .score-table td { font-weight: bold; }
+        .score-display { min-width: 70px; display: inline-block; text-align: right; padding: 5px; background-color: #f0f0f0; border-radius: 3px; font-family: monospace;}
+        .na-score { color: #888; } /* Stile per N/A */
+        .notes { font-size: 0.9em; color: #666; margin-top: 15px; }
+    </style>
+</head>
+<body>
+
+<h1>Calcolatore Punteggio SF-36</h1>
+<p>Inserisci i valori per ciascuna domanda nelle caselle sottostanti (colonne A-AQ del foglio Excel). I punteggi delle 8 dimensioni SF-36 (colonne successive) verranno calcolati e visualizzati automaticamente.</p>
+
+<form id="sf36-form" onsubmit="return false;"> <table>
+        <thead>
+            <tr>
+                <th>ID Domanda</th>
+                <th class="question-text">Testo Domanda (Indicativo)</th>
+                <th class="input-col">Risposta</th>
+                <th class="scale-info">Scala Valori / Note</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>Q1</td>
+                <td>In generale, diresti che la tua salute è:</td>
+                <td class="input-col"><input type="number" id="q1" class="score-input" min="1" max="5" required></td>
+                <td class="scale-info">1=Eccellente, 2=Molto buona, 3=Buona, 4=Discreta, 5=Scadente<br><i>(Scala invertita per il calcolo GH: 1=1 .. 5=5; Valori più alti indicano salute peggiore nella domanda, ma l'algoritmo li usa direttamente per GH dopo recodifica di altri item)</i></td>
+            </tr>
+             <tr>
+                <td>Q2 (HT)</td>
+                <td>Rispetto a un anno fa, come giudicheresti la tua salute attuale?</td>
+                <td class="input-col"><input type="number" id="q2" class="score-input" min="1" max="5" required></td>
+                <td class="scale-info">1=Molto migliore, 2=Un po' migliore, 3=Circa la stessa, 4=Un po' peggiore, 5=Molto peggiore<br><i>(Questo item misura la Health Transition (HT), solitamente non inclusa nei punteggi 0-100 delle 8 scale principali)</i></td>
+            </tr>
+            <tr><td colspan="4" style="background-color: #f8f8f8;"><b>Le seguenti domande riguardano attività che potresti svolgere durante una giornata tipo. La tua salute attuale ti limita nello svolgere queste attività? Se sì, quanto?</b></td></tr>
+            <tr><td>Q3a</td><td>Attività pesanti (correre, sollevare pesi)</td><td class="input-col"><input type="number" id="q3a" class="score-input" min="1" max="3" required></td><td class="scale-info">1=Sì, molto limitato<br>2=Sì, poco limitato<br>3=No, per niente limitato</td></tr>
+            <tr><td>Q3b</td><td>Attività moderate (spostare un tavolo, usare l'aspirapolvere)</td><td class="input-col"><input type="number" id="q3b" class="score-input" min="1" max="3" required></td><td class="scale-info">1-3</td></tr>
+            <tr><td>Q3c</td><td>Sollevare o trasportare borse della spesa</td><td class="input-col"><input type="number" id="q3c" class="score-input" min="1" max="3" required></td><td class="scale-info">1-3</td></tr>
+            <tr><td>Q3d</td><td>Salire qualche rampa di scale</td><td class="input-col"><input type="number" id="q3d" class="score-input" min="1" max="3" required></td><td class="scale-info">1-3</td></tr>
+            <tr><td>Q3e</td><td>Salire una rampa di scale</td><td class="input-col"><input type="number" id="q3e" class="score-input" min="1" max="3" required></td><td class="scale-info">1-3</td></tr>
+            <tr><td>Q3f</td><td>Piegarsi, inginocchiarsi o chinarsi</td><td class="input-col"><input type="number" id="q3f" class="score-input" min="1" max="3" required></td><td class="scale-info">1-3</td></tr>
+            <tr><td>Q3g</td><td>Camminare per più di un chilometro</td><td class="input-col"><input type="number" id="q3g" class="score-input" min="1" max="3" required></td><td class="scale-info">1-3</td></tr>
+            <tr><td>Q3h</td><td>Camminare per diverse centinaia di metri</td><td class="input-col"><input type="number" id="q3h" class="score-input" min="1" max="3" required></td><td class="scale-info">1-3</td></tr>
+            <tr><td>Q3i</td><td>Camminare per cento metri</td><td class="input-col"><input type="number" id="q3i" class="score-input" min="1" max="3" required></td><td class="scale-info">1-3</td></tr>
+            <tr><td>Q3j</td><td>Fare il bagno o vestirsi</td><td class="input-col"><input type="number" id="q3j" class="score-input" min="1" max="3" required></td><td class="scale-info">1-3</td></tr>
+            <tr><td colspan="4" style="background-color: #f8f8f8;"><b>Durante le ultime 4 settimane, hai avuto i seguenti problemi nel lavoro o altre attività quotidiane regolari A CAUSA DELLA TUA SALUTE FISICA?</b></td></tr>
+            <tr><td>Q4a</td><td>Hai ridotto il tempo dedicato al lavoro o altre attività?</td><td class="input-col"><input type="number" id="q4a" class="score-input" min="1" max="2" required></td><td class="scale-info">1=Sì, 2=No</td></tr>
+            <tr><td>Q4b</td><td>Hai ottenuto meno di quanto avresti voluto?</td><td class="input-col"><input type="number" id="q4b" class="score-input" min="1" max="2" required></td><td class="scale-info">1=Sì, 2=No</td></tr>
+            <tr><td>Q4c</td><td>Sei stato limitato nel tipo di lavoro o attività?</td><td class="input-col"><input type="number" id="q4c" class="score-input" min="1" max="2" required></td><td class="scale-info">1=Sì, 2=No</td></tr>
+            <tr><td>Q4d</td><td>Hai avuto difficoltà nello svolgere il lavoro o altre attività (es. richiesto sforzo extra)?</td><td class="input-col"><input type="number" id="q4d" class="score-input" min="1" max="2" required></td><td class="scale-info">1=Sì, 2=No</td></tr>
+             <tr><td colspan="4" style="background-color: #f8f8f8;"><b>Durante le ultime 4 settimane, hai avuto i seguenti problemi nel lavoro o altre attività quotidiane regolari A CAUSA DI PROBLEMI EMOTIVI (come sentirti depresso o ansioso)?</b></td></tr>
+            <tr><td>Q5a</td><td>Hai ridotto il tempo dedicato al lavoro o altre attività?</td><td class="input-col"><input type="number" id="q5a" class="score-input" min="1" max="2" required></td><td class="scale-info">1=Sì, 2=No</td></tr>
+            <tr><td>Q5b</td><td>Hai ottenuto meno di quanto avresti voluto?</td><td class="input-col"><input type="number" id="q5b" class="score-input" min="1" max="2" required></td><td class="scale-info">1=Sì, 2=No</td></tr>
+            <tr><td>Q5c</td><td>Non hai svolto il lavoro o altre attività con la stessa attenzione del solito?</td><td class="input-col"><input type="number" id="q5c" class="score-input" min="1" max="2" required></td><td class="scale-info">1=Sì, 2=No</td></tr>
+            <tr>
+                <td>Q6</td>
+                <td>Durante le ultime 4 settimane, quanto la tua salute fisica o i problemi emotivi hanno interferito con le tue normali attività sociali con famiglia, amici, vicini o gruppi?</td>
+                <td class="input-col"><input type="number" id="q6" class="score-input" min="1" max="5" required></td>
+                <td class="scale-info">1=Per niente, 2=Poco, 3=Moderatamente, 4=Molto, 5=Moltissimo<br><i>(Scala 1-5; Valori più alti = maggiore interferenza. Algoritmo usa valore diretto 1-5)</i></td>
+            </tr>
+            <tr>
+                <td>Q7</td>
+                <td>Quanto dolore fisico hai provato durante le ultime 4 settimane?</td>
+                <td class="input-col"><input type="number" id="q7" class="score-input" min="1" max="6" required></td>
+                <td class="scale-info">1=Nessuno, 2=Molto lieve, 3=Lieve, 4=Moderato, 5=Forte, 6=Fortissimo<br><i>(Valore più alto = più dolore. Algoritmo recodifica 1->6, 2->5 ... 6->1)</i></td>
+            </tr>
+            <tr>
+                <td>Q8</td>
+                <td>Durante le ultime 4 settimane, quanto il dolore ha interferito con il tuo lavoro normale (sia lavoro fuori casa che lavori domestici)?</td>
+                <td class="input-col"><input type="number" id="q8" class="score-input" min="1" max="5" required></td>
+                <td class="scale-info">1=Per niente, 2=Poco, 3=Moderatamente, 4=Molto, 5=Moltissimo<br><i>(Valore più alto = più interferenza. Algoritmo recodifica 1->5, 2->4 ... 5->1)</i></td>
+            </tr>
+             <tr><td colspan="4" style="background-color: #f8f8f8;"><b>Le seguenti domande riguardano come ti sei sentito e come sono andate le cose durante le ultime 4 settimane. Per ogni domanda, indica la risposta che si avvicina di più a come ti sei sentito.</b></td></tr>
+            <tr><td>Q9a (VT)</td><td>Ti sei sentito pieno di energia?</td><td class="input-col"><input type="number" id="q9a" class="score-input" min="1" max="6" required></td><td class="scale-info">1=Sempre, ..., 6=Mai<br><i>(Algoritmo usa valore diretto 1-6)</i></td></tr>
+            <tr><td>Q9b (MH)</td><td>Sei stato una persona nervosa?</td><td class="input-col"><input type="number" id="q9b" class="score-input" min="1" max="6" required></td><td class="scale-info">1=Sempre, ..., 6=Mai<br><i>(Algoritmo recodifica 1->6 ... 6->1)</i></td></tr>
+            <tr><td>Q9c (MH)</td><td>Ti sei sentito così giù di morale che niente poteva rallegrarti?</td><td class="input-col"><input type="number" id="q9c" class="score-input" min="1" max="6" required></td><td class="scale-info">1=Sempre, ..., 6=Mai<br><i>(Algoritmo recodifica 1->6 ... 6->1)</i></td></tr>
+            <tr><td>Q9d (MH)</td><td>Ti sei sentito calmo e sereno?</td><td class="input-col"><input type="number" id="q9d" class="score-input" min="1" max="6" required></td><td class="scale-info">1=Sempre, ..., 6=Mai<br><i>(Algoritmo usa valore diretto 1-6)</i></td></tr>
+            <tr><td>Q9e (VT)</td><td>Hai avuto molta energia?</td><td class="input-col"><input type="number" id="q9e" class="score-input" min="1" max="6" required></td><td class="scale-info">1=Sempre, ..., 6=Mai<br><i>(Algoritmo usa valore diretto 1-6)</i></td></tr>
+            <tr><td>Q9f (MH)</td><td>Ti sei sentito demoralizzato e triste?</td><td class="input-col"><input type="number" id="q9f" class="score-input" min="1" max="6" required></td><td class="scale-info">1=Sempre, ..., 6=Mai<br><i>(Algoritmo recodifica 1->6 ... 6->1)</i></td></tr>
+            <tr><td>Q9g (VT)</td><td>Ti sei sentito esausto?</td><td class="input-col"><input type="number" id="q9g" class="score-input" min="1" max="6" required></td><td class="scale-info">1=Sempre, ..., 6=Mai<br><i>(Algoritmo recodifica 1->6 ... 6->1)</i></td></tr>
+            <tr><td>Q9h (MH)</td><td>Sei stato una persona felice?</td><td class="input-col"><input type="number" id="q9h" class="score-input" min="1" max="6" required></td><td class="scale-info">1=Sempre, ..., 6=Mai<br><i>(Algoritmo usa valore diretto 1-6)</i></td></tr>
+            <tr><td>Q9i (VT)</td><td>Ti sei sentito stanco?</td><td class="input-col"><input type="number" id="q9i" class="score-input" min="1" max="6" required></td><td class="scale-info">1=Sempre, ..., 6=Mai<br><i>(Algoritmo recodifica 1->6 ... 6->1)</i></td></tr>
+            <tr>
+                <td>Q10</td>
+                <td>Durante le ultime 4 settimane, quanto spesso la tua salute fisica o i problemi emotivi hanno interferito con le tue attività sociali (come visitare amici, parenti, ecc.)?</td>
+                <td class="input-col"><input type="number" id="q10" class="score-input" min="1" max="5" required></td>
+                 <td class="scale-info">1=Sempre, 2=Molto spesso, 3=Qualche volta, 4=Raramente, 5=Mai<br><i>(Algoritmo usa valore diretto 1-5)</i></td>
+            </tr>
+             <tr><td colspan="4" style="background-color: #f8f8f8;"><b>Per favore, scegli la risposta che meglio descrive quanto è vero o falso per te ciascuna delle seguenti affermazioni.</b></td></tr>
+            <tr><td>Q11a</td><td>Sembra che io mi ammali più facilmente degli altri</td><td class="input-col"><input type="number" id="q11a" class="score-input" min="1" max="5" required></td><td class="scale-info">1=Assolutamente vero, ..., 5=Assolutamente falso<br><i>(Algoritmo recodifica 1->5 ... 5->1)</i></td></tr>
+            <tr><td>Q11b</td><td>Sono sano come chiunque altro io conosca</td><td class="input-col"><input type="number" id="q11b" class="score-input" min="1" max="5" required></td><td class="scale-info">1=Assolutamente vero, ..., 5=Assolutamente falso<br><i>(Algoritmo usa valore diretto 1-5)</i></td></tr>
+            <tr><td>Q11c</td><td>Mi aspetto che la mia salute peggiori</td><td class="input-col"><input type="number" id="q11c" class="score-input" min="1" max="5" required></td><td class="scale-info">1=Assolutamente vero, ..., 5=Assolutamente falso<br><i>(Algoritmo recodifica 1->5 ... 5->1)</i></td></tr>
+            <tr><td>Q11d</td><td>La mia salute è eccellente</td><td class="input-col"><input type="number" id="q11d" class="score-input" min="1" max="5" required></td><td class="scale-info">1=Assolutamente vero, ..., 5=Assolutamente falso<br><i>(Algoritmo usa valore diretto 1-5)</i></td></tr>
+
+             <tr><td colspan="4" style="background-color: #f8f8f8;"><b>Input Aggiuntivi (Colonne AL-AQ)</b></td></tr>
+             <tr><td>AL</td><td>Input AL</td><td class="input-col"><input type="text" id="al" class="score-input"></td><td class="scale-info">Valore libero (non usato nei calcoli SF-36)</td></tr>
+             <tr><td>AM</td><td>Input AM</td><td class="input-col"><input type="text" id="am" class="score-input"></td><td class="scale-info">Valore libero</td></tr>
+             <tr><td>AN</td><td>Input AN</td><td class="input-col"><input type="text" id="an" class="score-input"></td><td class="scale-info">Valore libero</td></tr>
+             <tr><td>AO</td><td>Input AO</td><td class="input-col"><input type="text" id="ao" class="score-input"></td><td class="scale-info">Valore libero</td></tr>
+             <tr><td>AP</td><td>Input AP</td><td class="input-col"><input type="text" id="ap" class="score-input"></td><td class="scale-info">Valore libero</td></tr>
+             <tr><td>AQ</td><td>Input AQ</td><td class="input-col"><input type="text" id="aq" class="score-input"></td><td class="scale-info">Valore libero</td></tr>
+        </tbody>
+    </table>
+</form>
+
+<div id="scores">
+    <h2>Punteggi Calcolati (Scala 0-100)</h2>
+    <p class="notes">I punteggi vengono aggiornati automaticamente. Un punteggio più alto indica uno stato di salute migliore.</p>
+    <table class="score-table">
+        <thead>
+            <tr>
+                <th>Dimensione SF-36</th>
+                <th>Punteggio (0-100)</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr><td>Physical Functioning (PF) <br><small>(Funzionamento Fisico)</small></td><td><span id="score_pf" class="score-display na-score">N/A</span></td></tr>
+            <tr><td>Role Physical (RP) <br><small>(Limitazioni Ruolo Fisico)</small></td><td><span id="score_rp" class="score-display na-score">N/A</span></td></tr>
+            <tr><td>Bodily Pain (BP) <br><small>(Dolore Fisico)</small></td><td><span id="score_bp" class="score-display na-score">N/A</span></td></tr>
+            <tr><td>General Health (GH) <br><small>(Salute Generale)</small></td><td><span id="score_gh" class="score-display na-score">N/A</span></td></tr>
+            <tr><td>Vitality (VT) <br><small>(Vitalità)</small></td><td><span id="score_vt" class="score-display na-score">N/A</span></td></tr>
+            <tr><td>Social Functioning (SF) <br><small>(Funzionamento Sociale)</small></td><td><span id="score_sf" class="score-display na-score">N/A</span></td></tr>
+            <tr><td>Role Emotional (RE) <br><small>(Limitazioni Ruolo Emotivo)</small></td><td><span id="score_re" class="score-display na-score">N/A</span></td></tr>
+            <tr><td>Mental Health (MH) <br><small>(Salute Mentale)</small></td><td><span id="score_mh" class="score-display na-score">N/A</span></td></tr>
+        </tbody>
+    </table>
+     <p class="notes"><i>Nota: I punteggi sono calcolati secondo l'algoritmo standard SF-36 (RAND). '<span class="na-score">N/A</span>' indica che mancano input validi o sono fuori scala per calcolare il punteggio di quella dimensione. Assicurati che tutti i campi numerici richiesti siano compilati correttamente.</i></p>
+</div>
+
+<script>
+    // --- Funzioni di Recodifica ---
+    // Recodifica Sì/No (1=Sì, 2=No) a (0=Sì, 1=No) per RP/RE
+    function recodeYesNo(value) {
+        const numValue = parseInt(value);
+        if (numValue === 1) return 0; // Sì (limitazione) -> punteggio peggiore
+        if (numValue === 2) return 1; // No (nessuna limitazione) -> punteggio migliore
+        return NaN;
+    }
+
+    // Recodifica Scala Dolore (Q7: 1-6, più alto=più dolore) a (6=migliore..1=peggiore)
+    function recodeQ7(value) {
+        const numValue = parseInt(value);
+        const map = { 1: 6, 2: 5, 3: 4, 4: 3, 5: 2, 6: 1 };
+        return map[numValue]; // Ritorna undefined se non mappato -> gestito come NaN dopo
+    }
+
+    // Recodifica Interferenza Dolore (Q8: 1-5, più alto=più interferenza) a (5=migliore..1=peggiore)
+    function recodeQ8(value) {
+        const numValue = parseInt(value);
+        const map = { 1: 5, 2: 4, 3: 3, 4: 2, 5: 1 };
+        return map[numValue];
+    }
+
+    // Recodifica Scala 6 punti Inversa (1->6, ..., 6->1) per item negativi VT/MH
+    function recode6ptReverse(value) {
+        const numValue = parseInt(value);
+        const map = { 1: 6, 2: 5, 3: 4, 4: 3, 5: 2, 6: 1 };
+        return map[numValue];
+    }
+
+     // Recodifica Scala 5 punti Inversa (1->5, ..., 5->1) per item negativi GH
+    function recode5ptReverse(value) {
+        const numValue = parseInt(value);
+        const map = { 1: 5, 2: 4, 3: 3, 4: 2, 5: 1 };
+        return map[numValue];
+    }
+
+    // --- Helper Functions ---
+    // Ottiene il valore numerico da un input, valida range e ritorna NaN se invalido/vuoto
+    function getInputValue(id) {
+        const el = document.getElementById(id);
+        if (!el || el.value === '') return NaN;
+
+        // Usiamo parseFloat per gestire numeri, anche se qui ci aspettiamo interi
+        const value = parseFloat(el.value);
+        const min = el.min ? parseFloat(el.min) : -Infinity;
+        const max = el.max ? parseFloat(el.max) : Infinity;
+
+        // Controlla se è un numero e se è nel range specificato (se min/max sono definiti)
+        if (isNaN(value) || value < min || value > max) {
+            el.classList.add('invalid-input'); // Aggiungi classe per feedback visivo (opzionale)
+            return NaN;
+        } else {
+             el.classList.remove('invalid-input'); // Rimuovi classe se valido
+            // Per scale specifiche (es. 1-6), assicurati che sia intero se necessario
+            if (el.step === "1" && !Number.isInteger(value)) return NaN;
+            return value;
+        }
+    }
+
+     // Controlla se tutti i valori forniti sono numeri validi (non NaN)
+    function checkValues(...values) {
+        return values.every(v => !isNaN(v) && v !== undefined);
+    }
+
+    // Calcola il punteggio trasformato 0-100
+    function transformScore(rawScore, minScore, maxScore) {
+        if (isNaN(rawScore)) return NaN;
+        const range = maxScore - minScore;
+        if (range === 0) return (rawScore >= minScore) ? 100 : 0; // Evita divisione per zero
+        return Math.max(0, Math.min(100, 100 * (rawScore - minScore) / range)); // Assicura che sia tra 0 e 100
+    }
+
+    // --- Funzioni di Calcolo per Dimensione ---
+    function calculatePF() { // Physical Functioning
+        const items = ['q3a', 'q3b', 'q3c', 'q3d', 'q3e', 'q3f', 'q3g', 'q3h', 'q3i', 'q3j'];
+        const values = items.map(getInputValue);
+        if (!checkValues(...values)) return { raw: NaN, score: NaN };
+        const rawScore = values.reduce((sum, v) => sum + v, 0); // Valori 1-3, più alto è meglio
+        return { raw: rawScore, score: transformScore(rawScore, 10, 30) }; // Min 10*1=10, Max 10*3=30
+    }
+
+    function calculateRP() { // Role Physical
+        const items = ['q4a', 'q4b', 'q4c', 'q4d'];
+        const values = items.map(id => recodeYesNo(getInputValue(id))); // Recodifica 1->0, 2->1
+        if (!checkValues(...values)) return { raw: NaN, score: NaN };
+        const rawScore = values.reduce((sum, v) => sum + v, 0); // Somma 0 o 1, più alto è meglio (meno limitazioni)
+        return { raw: rawScore, score: transformScore(rawScore, 0, 4) }; // Min 4*0=0, Max 4*1=4
+    }
+
+    function calculateBP() { // Bodily Pain
+        const valQ7 = recodeQ7(getInputValue('q7')); // Recodifica 1->6 ... 6->1
+        const valQ8 = recodeQ8(getInputValue('q8')); // Recodifica 1->5 ... 5->1
+        if (!checkValues(valQ7, valQ8)) return { raw: NaN, score: NaN };
+        const rawScore = valQ7 + valQ8; // Punteggio più alto è meglio (meno dolore/interferenza)
+        return { raw: rawScore, score: transformScore(rawScore, 2, 11) }; // Min 1+1=2, Max 6+5=11
+    }
+
+     function calculateGH() { // General Health
+        const valQ1 = getInputValue('q1');               // Usa 1-5 diretto
+        const valQ11a = recode5ptReverse(getInputValue('q11a')); // Recodifica 1->5..5->1
+        const valQ11b = getInputValue('q11b');             // Usa 1-5 diretto
+        const valQ11c = recode5ptReverse(getInputValue('q11c')); // Recodifica 1->5..5->1
+        const valQ11d = getInputValue('q11d');             // Usa 1-5 diretto
+        if (!checkValues(valQ1, valQ11a, valQ11b, valQ11c, valQ11d)) return { raw: NaN, score: NaN };
+        // Somma: Punteggio più alto è meglio
+        const rawScore = valQ1 + valQ11a + valQ11b + valQ11c + valQ11d;
+        return { raw: rawScore, score: transformScore(rawScore, 5, 25) }; // Min 5*1=5, Max 5*5=25
+    }
+
+     function calculateVT() { // Vitality
+        const valQ9a = getInputValue('q9a');             // Usa 1-6 diretto
+        const valQ9e = getInputValue('q9e');             // Usa 1-6 diretto
+        const valQ9g = recode6ptReverse(getInputValue('q9g')); // Recodifica 1->6..6->1
+        const valQ9i = recode6ptReverse(getInputValue('q9i')); // Recodifica 1->6..6->1
+        if (!checkValues(valQ9a, valQ9e, valQ9g, valQ9i)) return { raw: NaN, score: NaN };
+        // Somma: Punteggio più alto è meglio (più vitalità)
+        const rawScore = valQ9a + valQ9e + valQ9g + valQ9i;
+        return { raw: rawScore, score: transformScore(rawScore, 4, 24) }; // Min 4*1=4, Max 4*6=24
+    }
+
+    function calculateSF() { // Social Functioning
+        const valQ6 = getInputValue('q6'); // Usa 1-5 diretto
+        const valQ10 = getInputValue('q10'); // Usa 1-5 diretto
+         if (!checkValues(valQ6, valQ10)) return { raw: NaN, score: NaN };
+        // Somma: Punteggio più alto è meglio (meno interferenza)
+        const rawScore = valQ6 + valQ10;
+        return { raw: rawScore, score: transformScore(rawScore, 2, 10) }; // Min 1+1=2, Max 5+5=10
+    }
+
+     function calculateRE() { // Role Emotional
+        const items = ['q5a', 'q5b', 'q5c'];
+        const values = items.map(id => recodeYesNo(getInputValue(id))); // Recodifica 1->0, 2->1
+        if (!checkValues(...values)) return { raw: NaN, score: NaN };
+        const rawScore = values.reduce((sum, v) => sum + v, 0); // Somma 0 o 1, più alto è meglio (meno limitazioni)
+        return { raw: rawScore, score: transformScore(rawScore, 0, 3) }; // Min 3*0=0, Max 3*1=3
+    }
+
+     function calculateMH() { // Mental Health
+        const valQ9b = recode6ptReverse(getInputValue('q9b')); // Recodifica 1->6..6->1
+        const valQ9c = recode6ptReverse(getInputValue('q9c')); // Recodifica 1->6..6->1
+        const valQ9d = getInputValue('q9d');             // Usa 1-6 diretto
+        const valQ9f = recode6ptReverse(getInputValue('q9f')); // Recodifica 1->6..6->1
+        const valQ9h = getInputValue('q9h');             // Usa 1-6 diretto
+        if (!checkValues(valQ9b, valQ9c, valQ9d, valQ9f, valQ9h)) return { raw: NaN, score: NaN };
+        // Somma: Punteggio più alto è meglio (migliore salute mentale)
+        const rawScore = valQ9b + valQ9c + valQ9d + valQ9f + valQ9h;
+        return { raw: rawScore, score: transformScore(rawScore, 5, 30) }; // Min 5*1=5, Max 5*6=30
+    }
+
+    // --- Funzione Principale & Aggiornamento UI ---
+    function calculateScores() {
+        const results = {
+            pf: calculatePF(), rp: calculateRP(), bp: calculateBP(), gh: calculateGH(),
+            vt: calculateVT(), sf: calculateSF(), re: calculateRE(), mh: calculateMH()
+        };
+
+        for (const [key, value] of Object.entries(results)) {
+            const scoreElement = document.getElementById(`score_${key}`);
+            if (scoreElement) {
+                if (isNaN(value.score)) {
+                    scoreElement.textContent = 'N/A';
+                    scoreElement.classList.add('na-score');
+                } else {
+                    scoreElement.textContent = value.score.toFixed(2); // Mostra con 2 decimali
+                    scoreElement.classList.remove('na-score');
+                }
+            }
+        }
+    }
+
+    // --- Event Listener ---
+    // Aggiungi listener agli input quando il DOM è pronto
+    document.addEventListener('DOMContentLoaded', () => {
+        const inputs = document.querySelectorAll('.score-input');
+        inputs.forEach(input => {
+            // Calcola al cambiamento dell'input per feedback immediato
+            input.addEventListener('input', calculateScores);
+        });
+        // Calcolo iniziale (utile se il browser pre-compila i campi o per valori di default)
+        calculateScores();
+    });
+
+</script>
+
+</body>
+</html>

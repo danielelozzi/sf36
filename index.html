@@ -13,7 +13,7 @@
         th { background-color: #e9e9e9; font-weight: bold; }
         td:first-child { font-weight: bold; width: 80px; } /* ID Domanda */
         .input-col { width: 100px; text-align: center;}
-        input[type="number"], input[type="text"] { /* Anche se text non c'è più, lascio lo stile per coerenza */
+        input[type="number"] { /* Rimosso input[type="text"] */
              width: 80px; padding: 8px; border: 1px solid #ccc; border-radius: 4px;
              box-sizing: border-box; /* Include padding in width */
              text-align: center;
@@ -36,15 +36,16 @@
              margin-right: auto;
              margin-bottom: 30px;
         }
-        #visitor-counter { /* Stile per il contatore */
-            margin: 15px 0;
-            padding: 10px;
-            background-color: #eef;
-            border: 1px solid #cce;
-            border-radius: 4px;
-            text-align: center;
-            font-size: 0.9em;
+        #visitor-counter { /* Stile per il contenitore del contatore */
+            margin: 20px 0;
+            padding: 5px; /* Ridotto padding se il widget ha il suo */
+            /* Rimuovo stili specifici del contenitore precedente se il widget li gestisce */
+            /* background-color: #eef; */
+            /* border: 1px solid #cce; */
+            /* border-radius: 4px; */
+            text-align: center; /* Mantiene il widget centrato se necessario */
         }
+        /* Potrebbe essere necessario aggiungere stili specifici per .elfsight-app-... se vuoi personalizzare ulteriormente */
     </style>
 </head>
 <body>
@@ -53,8 +54,9 @@
 <p>Inserisci i valori per ciascuna domanda nelle caselle sottostanti. I punteggi delle 8 dimensioni SF-36 verranno calcolati e visualizzati automaticamente nella tabella e nel grafico a barre.</p>
 
 <div id="visitor-counter">
-    <p>Visite a questa pagina:</p>
-    <p><i>(Integra qui un servizio di contatore esterno)</i></p>
+    <script src="https://static.elfsight.com/platform/platform.js" data-use-service-core defer></script> {/* Modificato aggiungendo defer */}
+    <div class="elfsight-app-3a6a3cc6-59bc-4c0a-af91-4bef6b171bd3" data-elfsight-app-lazy></div>
+    {/* Il codice del contatore Elfsight è stato inserito qui */}
 </div>
 
 
@@ -139,8 +141,7 @@
             <tr><td>Q11b</td><td>Sono sano come chiunque altro</td><td class="input-col"><input type="number" id="q11b" class="score-input" min="1" max="5" step="1" required></td><td class="scale-info">1=Assolutamente vero, ..., 5=Assolutamente falso<br><i>(Algoritmo usa 1-5 per GH)</i></td></tr>
             <tr><td>Q11c</td><td>Mi aspetto che la mia salute peggiori</td><td class="input-col"><input type="number" id="q11c" class="score-input" min="1" max="5" step="1" required></td><td class="scale-info">1=Assolutamente vero, ..., 5=Assolutamente falso<br><i>(Algoritmo recodifica 1->5 ... 5->1)</i></td></tr>
             <tr><td>Q11d</td><td>La mia salute è eccellente</td><td class="input-col"><input type="number" id="q11d" class="score-input" min="1" max="5" step="1" required></td><td class="scale-info">1=Assolutamente vero, ..., 5=Assolutamente falso<br><i>(Algoritmo usa 1-5 per GH)</i></td></tr>
-
-             </tbody>
+        </tbody>
     </table>
 </form>
 
@@ -208,12 +209,10 @@
     // --- Helper Functions ---
     function getInputValue(id) {
         const el = document.getElementById(id);
-        // Verifica aggiunta per tipo 'text' anche se non ci sono più campi testo standard SF36
-        if (!el || (el.type !== 'text' && el.value === '')) {
+        if (!el || (el.type === 'number' && el.value === '')) { // Controlla solo i campi numerici per vuoto
              if(el) el.classList.add('invalid-input');
             return NaN;
         }
-        // Gestione specifica per i campi numerici
         if (el.type === 'number') {
             const value = parseFloat(el.value);
             const min = el.min !== "" ? parseFloat(el.min) : -Infinity;
@@ -227,9 +226,8 @@
                 return value;
             }
         }
-        // Se per caso ci fossero altri tipi di input (non in questo caso)
-        el.classList.remove('invalid-input'); // Rimuovi classe se non è un numero fallito
-        return el.value; // Ritorna il valore com'è (per eventuali campi testo futuri)
+         // Non ci sono altri tipi di input qui, ma per sicurezza:
+        return NaN; // Ritorna NaN per tipi non gestiti
     }
 
     function checkValues(...values) {
@@ -315,7 +313,7 @@
         const ctx = document.getElementById('scoresChart').getContext('2d');
         const chartLabels = ['PF', 'RP', 'BP', 'GH', 'VT', 'SF', 'RE', 'MH'];
         const backgroundColors = ['#4BC0C0', '#FF6384', '#FFCE56', '#36A2EB', '#9966FF', '#FF9F40', '#C9CBCF', '#4D5360'];
-        const borderColors = backgroundColors.map(color => color.replace('0.6', '1'));
+        const borderColors = backgroundColors; // Bordi dello stesso colore delle barre
 
         scoresChartInstance = new Chart(ctx, {
             type: 'bar',
@@ -337,14 +335,20 @@
                            tooltip: { callbacks: { label: function(context) {
                                 let label = context.dataset.label || '';
                                 if (label) { label += ': '; }
-                                if (context.parsed.y !== null) { label += context.parsed.y.toFixed(2); }
+                                // Mostra N/A se il valore originale era NaN, altrimenti mostra il numero
+                                const originalScore = context.chart.data.datasets[context.datasetIndex].originalScores[context.dataIndex];
+                                if (originalScore === 'N/A') {
+                                   label += 'N/A';
+                                } else if (context.parsed.y !== null) {
+                                   label += context.parsed.y.toFixed(2);
+                                }
                                 return label;
                            }}}}
             }
         });
     }
 
-    // --- Funzione Principale & Aggiornamento UI (Invariata) ---
+    // --- Funzione Principale & Aggiornamento UI ---
     function calculateScores() {
         const results = {
             pf: calculatePF(), rp: calculateRP(), bp: calculateBP(), gh: calculateGH(),
@@ -352,10 +356,12 @@
         };
 
         // Aggiorna tabella
+        const scoreValuesForTable = {};
         for (const [key, value] of Object.entries(results)) {
             const scoreElement = document.getElementById(`score_${key}`);
+            const displayValue = isNaN(value.score) ? 'N/A' : value.score.toFixed(2);
+            scoreValuesForTable[key] = displayValue; // Salva valore per tooltip grafico
             if (scoreElement) {
-                const displayValue = isNaN(value.score) ? 'N/A' : value.score.toFixed(2);
                 scoreElement.textContent = displayValue;
                 if (displayValue === 'N/A') { scoreElement.classList.add('na-score'); }
                 else { scoreElement.classList.remove('na-score'); }
@@ -364,24 +370,31 @@
 
         // Aggiorna grafico
         if (scoresChartInstance) {
-            const chartData = [
-                isNaN(results.pf.score) ? 0 : results.pf.score, isNaN(results.rp.score) ? 0 : results.rp.score,
-                isNaN(results.bp.score) ? 0 : results.bp.score, isNaN(results.gh.score) ? 0 : results.gh.score,
-                isNaN(results.vt.score) ? 0 : results.vt.score, isNaN(results.sf.score) ? 0 : results.sf.score,
-                isNaN(results.re.score) ? 0 : results.re.score, isNaN(results.mh.score) ? 0 : results.mh.score,
-            ];
+            // Prepara dati per il grafico (0 per N/A) e dati originali per tooltip
+            const chartData = [];
+            const originalScoresForTooltip = [];
+            const keys = ['pf', 'rp', 'bp', 'gh', 'vt', 'sf', 're', 'mh'];
+            keys.forEach(key => {
+                const score = results[key].score;
+                const displayValue = scoreValuesForTable[key]; // Prendi dalla tabella (include 'N/A')
+                chartData.push(isNaN(score) ? 0 : score); // Usa 0 per barre N/A
+                originalScoresForTooltip.push(displayValue); // Usa 'N/A' o numero per tooltip
+            });
+
             scoresChartInstance.data.datasets[0].data = chartData;
+            // Aggiungo un campo custom al dataset per accedere ai valori originali nel tooltip
+            scoresChartInstance.data.datasets[0].originalScores = originalScoresForTooltip;
             scoresChartInstance.update();
         }
     }
 
-    // --- Event Listener (Invariato) ---
+    // --- Event Listener ---
     document.addEventListener('DOMContentLoaded', () => {
         initChart();
         const inputs = document.querySelectorAll('.score-input');
         inputs.forEach(input => {
             input.addEventListener('input', calculateScores);
-            input.addEventListener('blur', (e) => getInputValue(e.target.id));
+            input.addEventListener('blur', (e) => getInputValue(e.target.id)); // Ri-valida on blur
         });
         calculateScores(); // Calcolo iniziale
     });

@@ -41,7 +41,7 @@
 <body>
 
 <h1>Calcolatore Punteggio SF-36</h1>
-<p>Inserisci i valori per ciascuna domanda nelle caselle sottostanti. I punteggi delle 8 dimensioni SF-36 verranno calcolati secondo la logica Python (ricodifica per item, media dimensione) e visualizzati.</p>
+<p>Inserisci i valori per ciascuna domanda nelle caselle sottostanti. I punteggi delle 8 dimensioni SF-36 verranno calcolati e visualizzati.</p>
 
 <form id="sf36-form" onsubmit="return false;">
     <table>
@@ -130,7 +130,7 @@
 </form>
 
 <div id="scores">
-    <h2>Punteggi Calcolati (Scala 0-100, Logica Python)</h2>
+    <h2>Punteggi Calcolati (Scala 0-100)</h2>
     <p class="notes">I punteggi vengono aggiornati automaticamente. Un punteggio più alto indica uno stato di salute migliore. 'N/D' indica che mancano troppe risposte per calcolare il punteggio di quella dimensione (max 50% mancanti).</p>
     <table class="score-table">
         <thead>
@@ -151,7 +151,7 @@
             <tr><td>Health Transition (HT) <br><small>(Percezione Transizione Salute)</small></td><td><span id="score_ht" class="score-display na-score">N/D</span></td></tr>
         </tbody>
     </table>
-    <p class="notes"><i>Nota: I punteggi sono calcolati secondo la logica della funzione Python fornita (ricodifica item 0-100, media dimensione, gestione missing 50%). Assicurati che tutti i campi numerici richiesti siano compilati correttamente con valori interi nei range indicati.</i></p>
+    <p class="notes"><i>Nota: I punteggi sono calcolati secondo la logica della funzione ricodifica item 0-100, media dimensione, gestione missing 50%). Assicurati che tutti i campi numerici richiesti siano compilati correttamente con valori interi nei range indicati.</i></p>
 </div>
 
 <div id="chart-container">
@@ -165,7 +165,7 @@
     let scoresChartInstance = null;
     let allAnswers = new Array(36).fill(null); // Array per memorizzare tutte le risposte
 
-    // --- Mappe di Ricodifica (simili a Python) ---
+    // --- Mappe di Ricodifica ---
     const RECODE_PF = {1: 0, 2: 50, 3: 100};
     const RECODE_RP_RE = {1: 0, 2: 100};
     const RECODE_Q9_POS = {1: 100, 2: 80, 3: 60, 4: 40, 5: 20, 6: 0};
@@ -230,7 +230,7 @@
         }
     }
 
-    // --- Funzione di Calcolo Generale (stile Python) ---
+    // --- Funzione di Calcolo Generale ---
     function calculateSf36Scores(answers) {
         let results = {};
 

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Calcolatore Punteggio SF-36 (Basato su PDF)</title>
+    <title>Calcolatore Punteggio SF-36</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         body { font-family: sans-serif; margin: 20px; background-color: #f9f9f9; }
@@ -40,7 +40,7 @@
 </head>
 <body>
 
-<h1>Calcolatore Punteggio SF-36 (Basato su PDF)</h1>
+<h1>Calcolatore Punteggio SF-36 (Basato su PDF - Corretto)</h1>
 <p>Inserisci i valori per ciascuna domanda nelle caselle sottostanti. I punteggi delle 8 dimensioni SF-36 (secondo le regole del PDF) verranno calcolati e visualizzati.</p>
 <p class="notes" style="color:red; font-weight:bold;">Attenzione: Questo calcolatore utilizza le regole di scoring specificate nel PDF fornito, che potrebbero differire dallo scoring standard dell'SF-36.</p>
 
@@ -152,7 +152,7 @@
             <tr><td>Health Transition (HT) <br><small>(Non nel sommario PDF, calcolato separatamente)</small></td><td><span id="score_ht" class="score-display na-score">N/D</span></td></tr>
         </tbody>
     </table>
-     <p class="notes"><i>Nota: I punteggi sono calcolati secondo la logica specificata nel PDF (ricodifica item 0-100, media dimensione, gestione missing 50%). Assicurati che tutti i campi numerici richiesti siano compilati correttamente con valori interi nei range indicati.</i></p>
+     <p class="notes"><i>Nota: I punteggi sono calcolati secondo la logica specificata nel PDF (ricodifica item 0-100, media dimensione basata sul N totale di item, gestione missing 50%). Assicurati che tutti i campi numerici richiesti siano compilati correttamente con valori interi nei range indicati.</i></p>
 </div>
 
 <div id="chart-container">
@@ -167,8 +167,6 @@
     let allAnswers = new Array(36).fill(null); // Array per memorizzare tutte le risposte
 
     // --- Mappe di Ricodifica BASATE SUL PDF ---
-    // Interpretazione: PDF dice "Ricodifica dell'oggetto per il punteggio" e elenca valori sotto 1, 2, 3, 4, 5, 6
-    //
     const RECODE_PDF_G1 = {1: 100, 2: 75, 3: 50, 4: 25, 5: 0};       // Per PDF Items: 1, 2, 20, 22, 34, 36 -> Indices: 0, 1, 19, 21, 33, 35
     const RECODE_PDF_G2 = {1: 0, 2: 50, 3: 100};                    // Per PDF Items: 3-12 -> Indices: 2-11
     const RECODE_PDF_G3 = {1: 0, 2: 100};                           // Per PDF Items: 13-19 -> Indices: 12-18
@@ -177,10 +175,249 @@
     const RECODE_PDF_G6 = {1: 0, 2: 25, 3: 50, 4: 75, 5: 100};       // Per PDF Items: 32, 33, 35 -> Indices: 31, 32, 34
 
     // --- Mappatura Indici (0-based) -> Item e Scale BASATA SUL PDF ---
-    //
     const scaleIndices = {
         'PF': [...Array(10).keys()].map(i => i + 2),  // Indici 2-11 (PDF Items 3-12)
         'RP': [...Array(4).keys()].map(i => i + 12),  // Indici 12-15 (PDF Items 13-16)
         'RE': [...Array(3).keys()].map(i => i + 16),  // Indici 16-18 (PDF Items 17-19)
         'VT': [22, 26, 28, 30],                       // Indici per PDF Items 23, 27, 29, 31 ('Energia/fatica')
-        'MH': [23, 24, 25, 27, 29],                       // Indici per PDF Items 24,
+        'MH': [23, 24, 25, 27, 29],                       // Indici per PDF Items 24, 25, 26, 28, 30 ('Benessere emotivo')
+        'SF': [19, 31],                               // Indici per PDF Items 20, 32 ('Funzionamento sociale')
+        'BP': [20, 21],                               // Indici per PDF Items 21, 22 ('Dolore') - Corretto
+        'GH': [0, 32, 33, 34, 35],                       // Indici per PDF Items 1, 33, 34, 35, 36 ('Salute generale') - Corretto
+        'HT': [1]                                     // Indice 1 (PDF Item 2) - Trattato separatamente
+    };
+
+     // --- Dizionario delle Mappe di Ricodifica per Indice BASATO SUL PDF ---
+    // Ricostruito per chiarezza e sicurezza
+    const itemRecodeMap = {};
+    // Gruppo 1: Indices 0, 1, 19, 21, 33, 35
+    [0, 1, 19, 21, 33, 35].forEach(i => itemRecodeMap[i] = RECODE_PDF_G1);
+    // Gruppo 2: Indices 2-11
+    [...Array(10).keys()].map(i => i + 2).forEach(i => itemRecodeMap[i] = RECODE_PDF_G2);
+    // Gruppo 3: Indices 12-18
+    [...Array(7).keys()].map(i => i + 12).forEach(i => itemRecodeMap[i] = RECODE_PDF_G3);
+     // Gruppo 4: Indices 20, 22, 25, 26, 29
+    [20, 22, 25, 26, 29].forEach(i => itemRecodeMap[i] = RECODE_PDF_G4);
+    // Gruppo 5: Indices 23, 24, 27, 28, 30
+    [23, 24, 27, 28, 30].forEach(i => itemRecodeMap[i] = RECODE_PDF_G5);
+    // Gruppo 6: Indices 31, 32, 34
+    [31, 32, 34].forEach(i => itemRecodeMap[i] = RECODE_PDF_G6);
+
+
+    // --- Helper Functions (invariate) ---
+    function getInputValue(inputElement) {
+        if (!inputElement) return { value: null, valid: false };
+
+        const valueStr = inputElement.value.trim();
+        if (valueStr === '') {
+            inputElement.classList.remove('invalid-input');
+            return { value: null, valid: true }; // Missing è valido in sé
+        }
+
+        const value = parseInt(valueStr);
+        const min = inputElement.min !== "" ? parseInt(inputElement.min) : -Infinity;
+        const max = inputElement.max !== "" ? parseInt(inputElement.max) : Infinity;
+        const index = parseInt(inputElement.getAttribute('data-index'));
+        const recodeMapForThisItem = itemRecodeMap[index];
+
+        if (isNaN(value) || !Number.isInteger(value) || value < min || value > max || !recodeMapForThisItem || !recodeMapForThisItem.hasOwnProperty(value)) {
+            inputElement.classList.add('invalid-input');
+            return { value: null, valid: false };
+        } else {
+            inputElement.classList.remove('invalid-input');
+            return { value: value, valid: true };
+        }
+    }
+
+    // --- Funzione di Calcolo Generale (CORRETTA) ---
+    function calculateSf36Scores(answers) {
+        let results = {};
+
+        for (const [scale, indices] of Object.entries(scaleIndices)) {
+            if (scale === 'HT') continue;
+
+            let validRawAnswers = [];
+            let numItems = indices.length; // Numero totale di item nel dominio
+
+            for (const idx of indices) {
+                const ans = answers[idx];
+                const recodeMapForItem = itemRecodeMap[idx];
+                if (ans !== null && typeof ans === 'number' && recodeMapForItem && recodeMapForItem.hasOwnProperty(ans)) {
+                    validRawAnswers.push(ans);
+                } else {
+                    validRawAnswers.push(null); // Tratta non valido/mancante come null
+                }
+            }
+
+            const missingCount = validRawAnswers.filter(ans => ans === null).length;
+
+            if (missingCount > numItems / 2) {
+                results[scale] = null; // Troppi missing
+                continue;
+            }
+
+            let recodedScores = [];
+            let sum = 0;
+            let validItemCount = 0; // Contatore item validi effettivamente ricodificati
+            for (let i = 0; i < numItems; i++) {
+                const rawAnswer = validRawAnswers[i];
+                 if (rawAnswer !== null) {
+                    const itemIndex = indices[i];
+                    const recodeFunc = itemRecodeMap[itemIndex];
+                    const recodedValue = recodeFunc[rawAnswer];
+                    recodedScores.push(recodedValue); // Teniamo traccia per debug se necessario
+                    sum += recodedValue;
+                    validItemCount++;
+                 }
+                 // Gli item mancanti (rawAnswer === null) non contribuiscono alla somma
+            }
+
+            // CORREZIONE: Applica la formula del PDF dividendo per il numero totale di item nel dominio
+            if (validItemCount === 0 && missingCount > 0) { // Se tutti gli item sono mancanti (ma <= 50%)
+                 results[scale] = null; // Non possiamo calcolare nulla
+            } else if (numItems > 0) { // Assicurati che il dominio abbia item
+                 results[scale] = sum / numItems; // Dividi la somma per il numero TOTALE di item del dominio
+            } else {
+                 results[scale] = null; // Dominio senza item? (Improbabile ma sicuro)
+            }
+        }
+
+        // Calcolo Health Transition (HT) separatamente
+        const htIndex = scaleIndices['HT'][0];
+        const htRaw = answers[htIndex];
+        const recodeMapHt = itemRecodeMap[htIndex];
+        if (htRaw === null || typeof htRaw !== 'number' || !recodeMapHt || !recodeMapHt.hasOwnProperty(htRaw)) {
+            results['HT'] = null;
+        } else {
+            results['HT'] = recodeMapHt[htRaw];
+        }
+
+        // Arrotondamento finale per visualizzazione (opzionale, fatto durante display)
+        // for (const scale in results) {
+        //     if (results[scale] !== null) {
+        //         results[scale] = Math.round(results[scale] * 100) / 100; // Arrotonda a 2 decimali
+        //     }
+        // }
+
+        return results;
+    }
+
+
+    // --- Inizializzazione Grafico (invariato) ---
+    function initChart() {
+        const ctx = document.getElementById('scoresChart').getContext('2d');
+        const chartLabels = ['PF', 'RP', 'RE', 'VT', 'MH', 'SF', 'BP', 'GH', 'HT'];
+        const chartDisplayLabels = [
+            'Fisico (PF)', 'Lim. Ruolo Fisico (RP)', 'Lim. Ruolo Emotivo (RE)',
+            'Energia (VT)', 'Benessere Emo. (MH)', 'Sociale (SF)',
+            'Dolore (BP)', 'Salute Gen. (GH)', 'Transizione Salute (HT)'
+        ];
+        const backgroundColors = ['#4BC0C0', '#FF6384', '#FFCE56', '#36A2EB', '#9966FF', '#FF9F40', '#C9CBCF', '#4D5360', '#AABBCC'];
+        const borderColors = backgroundColors;
+
+        scoresChartInstance = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: chartDisplayLabels,
+                datasets: [{
+                    label: 'Punteggi SF-36 (0-100, PDF)',
+                    data: Array(chartLabels.length).fill(0),
+                    backgroundColor: backgroundColors,
+                    borderColor: borderColors,
+                    borderWidth: 1,
+                    originalScores: Array(chartLabels.length).fill('N/D'),
+                    scaleKeys: chartLabels
+                }]
+            },
+            options: { /* opzioni invariate */
+                responsive: true, maintainAspectRatio: false,
+                indexAxis: 'x',
+                scales: {
+                    y: { beginAtZero: true, max: 100, title: { display: true, text: 'Punteggio (0-100)' }},
+                    x: { title: { display: true, text: 'Dimensioni SF-36 (secondo PDF)' }}
+                },
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                let label = context.dataset.label || '';
+                                if (label) { label += ': '; }
+                                const originalScore = context.chart.data.datasets[context.datasetIndex].originalScores[context.dataIndex];
+                                label += originalScore;
+                                return label;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    // --- Funzione Principale & Aggiornamento UI (invariato) ---
+    function updateScoresAndChart() {
+        let formIsValid = true;
+        allAnswers = [];
+        const inputs = document.querySelectorAll('.score-input');
+        inputs.forEach(input => {
+            const index = parseInt(input.getAttribute('data-index'));
+            const { value, valid } = getInputValue(input);
+             allAnswers[index] = value;
+             // Segna form non valido solo se c'è un input *compilato* ma non valido
+             if (!valid && input.value.trim() !== '') {
+                 formIsValid = false;
+             }
+        });
+
+        const results = calculateSf36Scores(allAnswers);
+
+        const scoreValuesForChart = {};
+        const originalScoresForTooltip = {};
+        for (const [key, score] of Object.entries(results)) {
+            const scoreElement = document.getElementById(`score_${key.toLowerCase()}`);
+            const displayValue = (score === null || isNaN(score)) ? 'N/D' : score.toFixed(2); // Arrotonda a 2 decimali qui
+            scoreValuesForChart[key] = (score === null || isNaN(score)) ? 0 : score;
+            originalScoresForTooltip[key] = displayValue;
+
+            if (scoreElement) {
+                scoreElement.textContent = displayValue;
+                if (displayValue === 'N/D') { scoreElement.classList.add('na-score'); }
+                else { scoreElement.classList.remove('na-score'); }
+            } else {
+                 console.warn(`Elemento score non trovato per la chiave: ${key.toLowerCase()}`);
+            }
+        }
+
+        if (scoresChartInstance) {
+            const chartData = [];
+            const tooltipData = [];
+            const chartKeys = scoresChartInstance.data.datasets[0].scaleKeys;
+             chartKeys.forEach(key => {
+                chartData.push(scoreValuesForChart[key] !== undefined ? scoreValuesForChart[key] : 0);
+                tooltipData.push(originalScoresForTooltip[key] !== undefined ? originalScoresForTooltip[key] : 'N/D');
+            });
+
+            scoresChartInstance.data.datasets[0].data = chartData;
+            scoresChartInstance.data.datasets[0].originalScores = tooltipData;
+            scoresChartInstance.update();
+        }
+    }
+
+    // --- Event Listener (invariati) ---
+    document.addEventListener('DOMContentLoaded', () => {
+        initChart();
+        const inputs = document.querySelectorAll('.score-input');
+        inputs.forEach(input => {
+            if (!input.hasAttribute('data-index')) {
+                console.warn("Input senza data-index:", input.id);
+            }
+            input.addEventListener('input', updateScoresAndChart);
+            input.addEventListener('blur', updateScoresAndChart);
+        });
+        updateScoresAndChart(); // Calcola all'inizio
+    });
+
+</script>
+
+</body>
+</html>

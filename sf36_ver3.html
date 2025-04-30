@@ -1,0 +1,615 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calcolatore Punteggio SF-36 (Logica SPSS)</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body { font-family: sans-serif; margin: 20px; background-color: #f9f9f9; }
+        h1, h2 { color: #333; }
+        table { width: 100%; border-collapse: collapse; margin-bottom: 20px; background-color: #fff; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        th, td { border: 1px solid #ccc; padding: 10px; text-align: left; vertical-align: top;}
+        th { background-color: #e9e9e9; font-weight: bold; }
+        td:first-child { font-weight: bold; width: 80px; } /* ID Domanda */
+        .input-col { width: 100px; text-align: center;}
+        input[type="number"] {
+             width: 80px; padding: 8px; border: 1px solid #ccc; border-radius: 4px;
+             box-sizing: border-box;
+             text-align: center;
+        }
+        input:invalid { border-color: red; }
+        .invalid-input { border-color: red !important; background-color: #fff7f7; }
+        .question-text { width: 60%; } /* Ridotto leggermente per fare spazio */
+        .scale-info { font-size: 0.9em; color: #555; }
+        #scores, #chart-container { margin-top: 30px; padding: 15px; background-color: #fff; box-shadow: 0 2px 4px rgba(0,0,0,0.1); border-radius: 5px;}
+        .score-table th:nth-child(2), .score-table td:nth-child(2),
+        .score-table th:nth-child(3), .score-table td:nth-child(3) {
+            text-align: right;
+            min-width: 80px;
+        }
+         .score-table th:nth-child(4), .score-table td:nth-child(4) {
+             text-align: right;
+            min-width: 120px;
+         }
+        .score-display, .zscore-display, .summary-display {
+             display: inline-block; text-align: right; padding: 5px; background-color: #f0f0f0; border-radius: 3px; font-family: monospace;
+             min-width: 70px; /* Larghezza minima per allineamento */
+        }
+        .na-score { color: #888; }
+        .notes { font-size: 0.9em; color: #666; margin-top: 15px; }
+        #chart-container {
+             position: relative; height: 40vh; width: 95%; max-width: 900px; /* Leggermente più largo */
+             margin-left: auto; margin-right: auto; margin-bottom: 30px;
+        }
+        /* Stile per evidenziare input non valido */
+        input.invalid-input {
+             border-color: red;
+             background-color: #ffecec;
+        }
+         .subheader { background-color: #f0f0f0; font-weight: bold; font-style: italic;}
+    </style>
+</head>
+<body>
+
+<h1>Calcolatore Punteggio SF-36 (Basato su Logica SPSS)</h1>
+<p>Inserisci i valori per ciascuna domanda nelle caselle sottostanti. I punteggi delle 8 dimensioni SF-36, gli Z-scores (standardizzati sulla popolazione USA generale), e gli indici sintetici ISF (PCS) e ISM (MCS) verranno calcolati secondo la logica SPSS fornita.</p>
+<p class="notes" style="color:blue; font-weight:bold;">Ver3 - Logica SPSS</p>
+
+<form id="sf36-form" onsubmit="return false;">
+    <table>
+        <thead>
+            <tr>
+                <th>ID Domanda (Variabile SPSS)</th>
+                <th class="question-text">Testo Domanda</th>
+                <th class="input-col">Risposta</th>
+                <th class="scale-info">Scala Valori Validi (SPSS)</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr><td>Q1 (gh1)</td><td class="question-text">In generale direbbe che la Sua salute è....</td><td class="input-col"><input type="number" id="q1" data-index="0" class="score-input" min="1" max="5" step="1"></td><td class="scale-info">1-5</td></tr>
+            <tr><td>Q2 (cs)</td><td class="question-text">Rispetto a un anno fa, come giudicherebbe, ora, la Sua salute in generale?</td><td class="input-col"><input type="number" id="q2" data-index="1" class="score-input" min="1" max="5" step="1"></td><td class="scale-info">1-5</td></tr>
+            <tr><td colspan="4" style="background-color: #f8f8f8;"><b>Le seguenti domande riguardano alcune attività che potrebbe svolgere... (PF - Attività Fisica)</b></td></tr>
+            <tr><td>Q3a (pf1)</td><td>Attività fisicamente impegnative...</td><td class="input-col"><input type="number" id="q3a" data-index="2" class="score-input" min="1" max="3" step="1"></td><td class="scale-info">1-3</td></tr>
+            <tr><td>Q3b (pf2)</td><td>Attività di moderato impegno fisico...</td><td class="input-col"><input type="number" id="q3b" data-index="3" class="score-input" min="1" max="3" step="1"></td><td class="scale-info">1-3</td></tr>
+            <tr><td>Q3c (pf3)</td><td>Sollevare o portare le borse della spesa</td><td class="input-col"><input type="number" id="q3c" data-index="4" class="score-input" min="1" max="3" step="1"></td><td class="scale-info">1-3</td></tr>
+            <tr><td>Q3d (pf4)</td><td>Salire qualche piano di scale</td><td class="input-col"><input type="number" id="q3d" data-index="5" class="score-input" min="1" max="3" step="1"></td><td class="scale-info">1-3</td></tr>
+            <tr><td>Q3e (pf5)</td><td>Salire un piano di scale</td><td class="input-col"><input type="number" id="q3e" data-index="6" class="score-input" min="1" max="3" step="1"></td><td class="scale-info">1-3</td></tr>
+            <tr><td>Q3f (pf6)</td><td>Piegarsi, inginocchiarsi o chinarsi</td><td class="input-col"><input type="number" id="q3f" data-index="7" class="score-input" min="1" max="3" step="1"></td><td class="scale-info">1-3</td></tr>
+            <tr><td>Q3g (pf7)</td><td>Camminare per un chilometro</td><td class="input-col"><input type="number" id="q3g" data-index="8" class="score-input" min="1" max="3" step="1"></td><td class="scale-info">1-3</td></tr>
+            <tr><td>Q3h (pf8)</td><td>Camminare per qualche centinaia di metri</td><td class="input-col"><input type="number" id="q3h" data-index="9" class="score-input" min="1" max="3" step="1"></td><td class="scale-info">1-3</td></tr>
+            <tr><td>Q3i (pf9)</td><td>Camminare per circa cento metri</td><td class="input-col"><input type="number" id="q3i" data-index="10" class="score-input" min="1" max="3" step="1"></td><td class="scale-info">1-3</td></tr>
+            <tr><td>Q3j (pf10)</td><td>Fare il bagno o vestirsi da soli</td><td class="input-col"><input type="number" id="q3j" data-index="11" class="score-input" min="1" max="3" step="1"></td><td class="scale-info">1-3 (Assumendo Q3j=pf10)</td></tr>
+            <tr><td colspan="4" style="background-color: #f8f8f8;"><b>Nelle ultime quattro settimane, ha riscontrato... problemi... a causa della Sua salute fisica? (RP - Ruolo Fisico)</b></td></tr>
+            <tr><td>Q4a (rp1)</td><td>Ha ridotto il tempo dedicato al lavoro o ad altre attività</td><td class="input-col"><input type="number" id="q4a" data-index="12" class="score-input" min="1" max="2" step="1"></td><td class="scale-info">1=Sì, 2=No (Valori 1-2)</td></tr>
+            <tr><td>Q4b (rp2)</td><td>Ha reso meno di quanto avrebbe voluto</td><td class="input-col"><input type="number" id="q4b" data-index="13" class="score-input" min="1" max="2" step="1"></td><td class="scale-info">1=Sì, 2=No (Valori 1-2)</td></tr>
+            <tr><td>Q4c (rp3)</td><td>Ha dovuto limitare alcuni tipi di lavoro o di altre attività</td><td class="input-col"><input type="number" id="q4c" data-index="14" class="score-input" min="1" max="2" step="1"></td><td class="scale-info">1=Sì, 2=No (Valori 1-2)</td></tr>
+            <tr><td>Q4d (rp4)</td><td>Ha avuto difficoltà nell'eseguire il lavoro o altre attività...</td><td class="input-col"><input type="number" id="q4d" data-index="15" class="score-input" min="1" max="2" step="1"></td><td class="scale-info">1=Sì, 2=No (Valori 1-2)</td></tr>
+            <tr><td colspan="4" style="background-color: #f8f8f8;"><b>Nelle ultime quattro settimane, ha riscontrato... problemi... a causa del Suo stato emotivo...? (RE - Ruolo Emotivo)</b></td></tr>
+             <tr><td>Q5a (re1)</td><td>Ha ridotto il tempo dedicato al lavoro o ad altre attività</td><td class="input-col"><input type="number" id="q5a" data-index="16" class="score-input" min="1" max="2" step="1"></td><td class="scale-info">1=Sì, 2=No (Valori 1-2)</td></tr>
+            <tr><td>Q5b (re2)</td><td>Ha reso meno di quanto avrebbe voluto</td><td class="input-col"><input type="number" id="q5b" data-index="17" class="score-input" min="1" max="2" step="1"></td><td class="scale-info">1=Sì, 2=No (Valori 1-2)</td></tr>
+            <tr><td>Q5c (re3)</td><td>Ha avuto un calo di concentrazione sul lavoro o in altre attività</td><td class="input-col"><input type="number" id="q5c" data-index="18" class="score-input" min="1" max="2" step="1"></td><td class="scale-info">1=Sì, 2=No (Valori 1-2)</td></tr>
+            <tr><td colspan="4" style="background-color: #f8f8f8;"><b>Dolore Fisico (BP) e Funzionamento Sociale (SF - parte 1)</b></td></tr>
+            <tr><td>Q6 (sf1)</td><td class="question-text">Nelle ultime quattro settimane, in che misura la Sua salute fisica o il Suo stato emotivo hanno interferito con le normali attività sociali...</td><td class="input-col"><input type="number" id="q6" data-index="19" class="score-input" min="1" max="5" step="1"></td><td class="scale-info">1-5</td></tr>
+            <tr><td>Q7 (bp1)</td><td class="question-text">Quanto dolore fisico ha provato nelle ultime quattro settimane?</td><td class="input-col"><input type="number" id="q7" data-index="20" class="score-input" min="1" max="6" step="1"></td><td class="scale-info">1-6</td></tr>
+            <tr><td>Q8 (bp2)</td><td class="question-text">Nelle ultime quattro settimane, in che misura il dolore L'ha ostacolata nel lavoro che svolge abitualmente...?</td><td class="input-col"><input type="number" id="q8" data-index="21" class="score-input" min="1" max="5" step="1"></td><td class="scale-info">1-5</td></tr>
+            <tr><td colspan="4" style="background-color: #f8f8f8;"><b>Vitalità (VT) e Salute Mentale (MH)</b></td></tr>
+             <tr><td>Q9a (vt1)</td><td>Vivace e brillante?</td><td class="input-col"><input type="number" id="q9a" data-index="22" class="score-input" min="1" max="6" step="1"></td><td class="scale-info">1-6</td></tr>
+            <tr><td>Q9b (mh1)</td><td>Molto agitato?</td><td class="input-col"><input type="number" id="q9b" data-index="23" class="score-input" min="1" max="6" step="1"></td><td class="scale-info">1-6</td></tr>
+            <tr><td>Q9c (mh2)</td><td>Così giù di morale che niente avrebbe potuto tirarla su?</td><td class="input-col"><input type="number" id="q9c" data-index="24" class="score-input" min="1" max="6" step="1"></td><td class="scale-info">1-6</td></tr>
+            <tr><td>Q9d (mh3)</td><td>Calmo e sereno?</td><td class="input-col"><input type="number" id="q9d" data-index="25" class="score-input" min="1" max="6" step="1"></td><td class="scale-info">1-6</td></tr>
+            <tr><td>Q9e (vt2)</td><td>Pieno di energia?</td><td class="input-col"><input type="number" id="q9e" data-index="26" class="score-input" min="1" max="6" step="1"></td><td class="scale-info">1-6</td></tr>
+            <tr><td>Q9f (mh4)</td><td>Scoraggiato e triste?</td><td class="input-col"><input type="number" id="q9f" data-index="27" class="score-input" min="1" max="6" step="1"></td><td class="scale-info">1-6</td></tr>
+            <tr><td>Q9g (vt3)</td><td>Sfinito?</td><td class="input-col"><input type="number" id="q9g" data-index="28" class="score-input" min="1" max="6" step="1"></td><td class="scale-info">1-6</td></tr>
+            <tr><td>Q9h (mh5)</td><td>Felice?</td><td class="input-col"><input type="number" id="q9h" data-index="29" class="score-input" min="1" max="6" step="1"></td><td class="scale-info">1-6</td></tr>
+            <tr><td>Q9i (vt4)</td><td>Stanco?</td><td class="input-col"><input type="number" id="q9i" data-index="30" class="score-input" min="1" max="6" step="1"></td><td class="scale-info">1-6</td></tr>
+            <tr><td colspan="4" style="background-color: #f8f8f8;"><b>Funzionamento Sociale (SF - parte 2) e Salute Generale (GH - parte 2)</b></td></tr>
+            <tr><td>Q10 (sf2)</td><td class="question-text">Nelle ultime quattro settimane, per quanto tempo la Sua salute fisica o il Suo stato emotivo hanno interferito nelle Sue attività sociali...?</td><td class="input-col"><input type="number" id="q10" data-index="31" class="score-input" min="1" max="5" step="1"></td><td class="scale-info">1-5</td></tr>
+             <tr><td>Q11a (gh2)</td><td>Mi pare di ammalarmi un po' più facilmente degli altri</td><td class="input-col"><input type="number" id="q11a" data-index="32" class="score-input" min="1" max="5" step="1"></td><td class="scale-info">1-5</td></tr>
+            <tr><td>Q11b (gh3)</td><td>La mia salute è come quella degli altri</td><td class="input-col"><input type="number" id="q11b" data-index="33" class="score-input" min="1" max="5" step="1"></td><td class="scale-info">1-5</td></tr>
+            <tr><td>Q11c (gh4)</td><td>Mi aspetto che la mia salute andrà peggiorando</td><td class="input-col"><input type="number" id="q11c" data-index="34" class="score-input" min="1" max="5" step="1"></td><td class="scale-info">1-5</td></tr>
+            <tr><td>Q11d (gh5)</td><td>Godo di ottima salute</td><td class="input-col"><input type="number" id="q11d" data-index="35" class="score-input" min="1" max="5" step="1"></td><td class="scale-info">1-5</td></tr>
+        </tbody>
+    </table>
+</form>
+
+<div id="scores">
+    <h2>Punteggi Calcolati (Logica SPSS)</h2>
+    <p class="notes">Punteggi 0-100: punteggio più alto indica stato migliore. Z-Score: standardizzato su Pop. Generale USA (Media=0, DS=1). ISF/ISM: indici sintetici (Media=50, DS=10). 'N/D' indica che mancano troppe risposte per il calcolo (richiesto almeno 50% + 1 item valido per scala, o tutti gli item necessari per ISF/ISM).</p>
+    <table class="score-table">
+        <thead>
+            <tr>
+                <th>Dimensione SF-36</th>
+                <th>Punteggio (0-100)</th>
+                <th>Z-Score (Pop. USA)</th>
+                <th>Componente Sintetica</th>
+                <th>Punteggio T (Media 50, DS 10)</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr><td>Attività Fisica (PF)</td><td><span id="score_pf" class="score-display na-score">N/D</span></td><td><span id="zscore_pf" class="zscore-display na-score">N/D</span></td> <td rowspan="4" style="vertical-align: middle; text-align: center; border-right: 1px solid #ccc;">Indice Salute Fisica (ISF / PCS)</td> <td rowspan="4" style="vertical-align: middle; text-align: right;"><span id="summary_pcs" class="summary-display na-score">N/D</span></td> </tr>
+            <tr><td>Limitazioni Ruolo Fisico (RP)</td><td><span id="score_rp" class="score-display na-score">N/D</span></td><td><span id="zscore_rp" class="zscore-display na-score">N/D</span></td></tr>
+            <tr><td>Dolore Fisico (BP)</td><td><span id="score_bp" class="score-display na-score">N/D</span></td><td><span id="zscore_bp" class="zscore-display na-score">N/D</span></td></tr>
+            <tr><td>Salute Generale (GH)</td><td><span id="score_gh" class="score-display na-score">N/D</span></td><td><span id="zscore_gh" class="zscore-display na-score">N/D</span></td></tr>
+             <tr><td colspan="5" class="subheader"></td></tr>
+            <tr><td>Vitalità (VT)</td><td><span id="score_vt" class="score-display na-score">N/D</span></td><td><span id="zscore_vt" class="zscore-display na-score">N/D</span></td> <td rowspan="4" style="vertical-align: middle; text-align: center; border-right: 1px solid #ccc;">Indice Salute Mentale (ISM / MCS)</td> <td rowspan="4" style="vertical-align: middle; text-align: right;"><span id="summary_mcs" class="summary-display na-score">N/D</span></td> </tr>
+            <tr><td>Funzionamento Sociale (SF)</td><td><span id="score_sf" class="score-display na-score">N/D</span></td><td><span id="zscore_sf" class="zscore-display na-score">N/D</span></td></tr>
+            <tr><td>Limitazioni Ruolo Emotivo (RE)</td><td><span id="score_re" class="score-display na-score">N/D</span></td><td><span id="zscore_re" class="zscore-display na-score">N/D</span></td></tr>
+            <tr><td>Salute Mentale (MH)</td><td><span id="score_mh" class="score-display na-score">N/D</span></td><td><span id="zscore_mh" class="zscore-display na-score">N/D</span></td></tr>
+            <tr><td colspan="5" class="subheader"></td></tr>
+            <tr><td>Transizione Salute (HT) <br><small>(Non usata per ISF/ISM)</small></td><td><span id="score_ht" class="score-display na-score">N/D</span></td><td><span class="zscore-display" style="background-color: transparent;">-</span></td> <td></td> <td></td></tr>
+        </tbody>
+    </table>
+     <p class="notes"><i>Nota: Il calcolo segue la logica del codice SPSS fornito, inclusa l'imputazione della media per valori mancanti (se <50% missing) e le formule di trasformazione specifiche. La standardizzazione (Z-score, ISF, ISM) usa medie, DS e pesi della popolazione generale USA come da SPSS, non è specifica per età o sesso.</i></p>
+</div>
+
+<div id="chart-container">
+    <h2>Grafico Riepilogativo Punteggi (0-100, Logica SPSS)</h2>
+    <canvas id="scoresChart"></canvas>
+</div>
+
+
+<script>
+    // --- Variabile Globale per il Grafico ---
+    let scoresChartInstance = null;
+    let allAnswers = new Array(36).fill(null); // Array per memorizzare tutte le risposte grezze
+
+    // --- Mappatura Item ID (HTML) -> Indice Array (0-35) ---
+    // Questa mappatura serve solo se gli ID HTML non seguono l'ordine 0-35
+    // Assumiamo che l'attributo data-index sia corretto (0-35)
+    // const itemIdToIndex = {}; // Non necessaria se data-index è usato correttamente
+
+    // --- Mappatura Indici (0-based) -> Variabili e Scale SPSS ---
+    // Mappa l'indice dell'array JS (0-35) alla scala SF-36
+    // Basato sulla sequenza delle domande e le variabili SPSS
+    const scaleItemIndices = {
+        'PF': [2, 3, 4, 5, 6, 7, 8, 9, 10, 11], // Indici per pf1-pf10 (Q3a-Q3j)
+        'RP': [12, 13, 14, 15],                // Indici per rp1-rp4 (Q4a-Q4d)
+        'BP': [20, 21],                        // Indici per bp1, bp2 (Q7, Q8)
+        'GH': [0, 32, 33, 34, 35],            // Indici per gh1-gh5 (Q1, Q11a-Q11d)
+        'VT': [22, 26, 28, 30],                // Indici per vt1-vt4 (Q9a, Q9e, Q9g, Q9i)
+        'SF': [19, 31],                        // Indici per sf1, sf2 (Q6, Q10)
+        'RE': [16, 17, 18],                    // Indici per re1-re3 (Q5a-Q5c)
+        'MH': [23, 24, 25, 27, 29],            // Indici per mh1-mh5 (Q9b, Q9c, Q9d, Q9f, Q9h)
+        'HT': [1]                             // Indice per cs (Q2) - Health Transition
+    };
+
+    // --- Range Validi per Item (secondo SPSS RECODE) ---
+    const itemValidRanges = {
+         0: {min: 1, max: 5},  1: {min: 1, max: 5}, // Q1, Q2
+         2: {min: 1, max: 3},  3: {min: 1, max: 3},  4: {min: 1, max: 3},  5: {min: 1, max: 3},  6: {min: 1, max: 3}, // Q3a-e
+         7: {min: 1, max: 3},  8: {min: 1, max: 3},  9: {min: 1, max: 3}, 10: {min: 1, max: 3}, 11: {min: 1, max: 3}, // Q3f-j
+        12: {min: 1, max: 2}, 13: {min: 1, max: 2}, 14: {min: 1, max: 2}, 15: {min: 1, max: 2}, // Q4a-d
+        16: {min: 1, max: 2}, 17: {min: 1, max: 2}, 18: {min: 1, max: 2}, // Q5a-c
+        19: {min: 1, max: 5}, // Q6
+        20: {min: 1, max: 6}, // Q7
+        21: {min: 1, max: 5}, // Q8
+        22: {min: 1, max: 6}, 23: {min: 1, max: 6}, 24: {min: 1, max: 6}, 25: {min: 1, max: 6}, 26: {min: 1, max: 6}, // Q9a-e
+        27: {min: 1, max: 6}, 28: {min: 1, max: 6}, 29: {min: 1, max: 6}, 30: {min: 1, max: 6}, // Q9f-i
+        31: {min: 1, max: 5}, // Q10
+        32: {min: 1, max: 5}, 33: {min: 1, max: 5}, 34: {min: 1, max: 5}, 35: {min: 1, max: 5}  // Q11a-d
+    };
+
+     // --- Costanti per Standardizzazione Z (Popolazione USA Generale - da SPSS) ---
+     const usMeans = { PF: 84.52404, RP: 81.19907, BP: 75.49196, GH: 72.21316, VT: 61.05453, SF: 83.59753, RE: 81.29467, MH: 74.84212 };
+     const usSDs   = { PF: 22.89490, RP: 33.79729, BP: 23.55879, GH: 20.16964, VT: 20.86942, SF: 22.37642, RE: 33.02717, MH: 18.01189 };
+
+     // --- Pesi Fattoriali per PCS (ISF) e MCS (ISM) (Popolazione USA Generale - da SPSS) ---
+     const weights = {
+         PCS: { PF:  0.42402, RP:  0.35119, BP:  0.31754, GH:  0.24954, VT:  0.02877, SF: -0.00753, RE: -0.19206, MH: -0.22069 },
+         MCS: { PF: -0.22999, RP: -0.12329, BP: -0.09731, GH: -0.01571, VT:  0.23534, SF:  0.26876, RE:  0.43407, MH:  0.48581 }
+     };
+
+    // --- Helper Function: Ottieni e valida valore grezzo ---
+    function getRawValue(inputElement) {
+        if (!inputElement) return { value: null, valid: false };
+
+        const valueStr = inputElement.value.trim();
+        if (valueStr === '') {
+            inputElement.classList.remove('invalid-input');
+            return { value: null, valid: true }; // Missing è valido in sé
+        }
+
+        const value = parseInt(valueStr);
+        const index = parseInt(inputElement.getAttribute('data-index'));
+        const range = itemValidRanges[index];
+
+        if (isNaN(value) || !Number.isInteger(value) || !range || value < range.min || value > range.max) {
+            inputElement.classList.add('invalid-input');
+            return { value: null, valid: false }; // Invalido per tipo o range
+        } else {
+            inputElement.classList.remove('invalid-input');
+            return { value: value, valid: true }; // Valido
+        }
+    }
+
+    // --- Funzione di Calcolo Generale (Logica SPSS) ---
+    function calculateSf36ScoresSPSS(answers) {
+        let rawScores = {}; // Memorizza i punteggi grezzi validati
+        let results = { scores: {}, zScores: {}, summaries: {} }; // Oggetto per i risultati finali
+
+        // 1. Validazione e Memorizzazione Valori Grezzi
+        for (let i = 0; i < answers.length; i++) {
+             const inputElement = document.querySelector(`.score-input[data-index="${i}"]`);
+             if (inputElement) {
+                const { value, valid } = getRawValue(inputElement);
+                 // Memorizziamo il valore grezzo se valido nel range, altrimenti null
+                 rawScores[i] = (valid && value !== null) ? value : null;
+            } else {
+                 rawScores[i] = null; // Se manca l'input
+             }
+        }
+
+        // Funzione interna per calcolare media e gestire missing
+        function calculateScaleScore(scaleName, itemIndices, minValidItems, transformation) {
+            let validRawValues = [];
+            let missingCount = 0;
+
+            itemIndices.forEach(index => {
+                const rawValue = rawScores[index];
+                if (rawValue !== null) {
+                    validRawValues.push(rawValue);
+                } else {
+                    missingCount++;
+                }
+            });
+
+            const validCount = validRawValues.length;
+
+            // Verifica se ci sono abbastanza item validi
+            if (validCount < minValidItems) {
+                return null; // Non calcolabile
+            }
+
+            // Calcola la media dei valori grezzi validi (se ce ne sono)
+            const rawMean = validCount > 0 ? validRawValues.reduce((a, b) => a + b, 0) / validCount : 0;
+
+            // Ricodifica/Trasforma valori specifici prima della somma (come da SPSS)
+            let processedValues = [];
+            itemIndices.forEach(index => {
+                let valueToProcess = rawScores[index];
+                let processedValue = null;
+
+                if (valueToProcess === null) {
+                     // Imputa la media grezza per i missing
+                     processedValue = rawMean;
+                 } else {
+                     // Applica ricodifiche specifiche *prima* della somma se necessario
+                     // (Esempio per GH, VT, SF, MH - Invertire scale)
+                     if (transformation.recode && transformation.recode[index]) {
+                         const recodeMap = transformation.recode[index];
+                         processedValue = recodeMap[valueToProcess] !== undefined ? recodeMap[valueToProcess] : valueToProcess; // Usa ricodifica se esiste
+                     } else {
+                        processedValue = valueToProcess; // Usa valore grezzo
+                     }
+                }
+                 processedValues.push(processedValue);
+            });
+
+
+            // Somma i valori processati (validi grezzi/ricodificati + medie imputate)
+            const rawSum = processedValues.reduce((a, b) => a + b, 0);
+
+            // Applica la formula di trasformazione finale 0-100
+            const score = ((rawSum - transformation.minSum) / transformation.range) * 100;
+            return score;
+        }
+
+        // 2. Calcolo Punteggi Scale 0-100 (Logica SPSS)
+
+        // PF - Attività Fisica (10 item, min 5 validi)
+        results.scores['PF'] = calculateScaleScore('PF', scaleItemIndices['PF'], 5, {
+             minSum: 10, // 10 items * min value 1
+             range: 20   // 10 items * (max value 3 - min value 1)
+             // Nessuna ricodifica pre-somma necessaria per PF
+        });
+
+        // RP - Ruolo Fisico (4 item, min 2 validi)
+        // Valori grezzi: 1=Si, 2=No. Valore più basso (1) indica peggiore stato.
+        // SPSS COMPUTE RP = ((rpg - 4) / 4) * 100. Min sum = 4*1=4. Max sum = 4*2=8. Range = 4.
+        // La formula SPSS implicitamente inverte la scala (punteggio più alto = migliore)
+        results.scores['RP'] = calculateScaleScore('RP', scaleItemIndices['RP'], 2, {
+            minSum: 4, // 4 items * min value 1
+            range: 4   // 4 items * (max value 2 - min value 1)
+        });
+
+        // RE - Ruolo Emotivo (3 item, min 2 validi)
+        // Valori grezzi: 1=Si, 2=No. Valore più basso (1) indica peggiore stato.
+        // SPSS COMPUTE RE = ((reg - 3) / 3) * 100. Min sum = 3*1=3. Max sum = 3*2=6. Range=3.
+        results.scores['RE'] = calculateScaleScore('RE', scaleItemIndices['RE'], 2, { // SPSS usa >=2, ma 50%+1 sarebbe 2
+            minSum: 3, // 3 items * min value 1
+            range: 3   // 3 items * (max value 2 - min value 1)
+        });
+
+        // VT - Vitalità (4 item, min 2 validi)
+        // Item vt1(Q9a), vt2(Q9e) sono positivi (1=Migliore -> 6=Peggiore in SPSS recode).
+        // Item vt3(Q9g), vt4(Q9i) sono negativi (1=Peggiore -> 6=Migliore).
+        // SPSS li somma DOPO aver ricodificato vt1, vt2 (1=6, 2=5...).
+        // Formula finale: ((vtg - 4) / 20) * 100. Min sum=4*1=4. Max sum=4*6=24. Range=20.
+        const vtRecodeMap = { 1: 6, 2: 5, 3: 4, 4: 3, 5: 2, 6: 1 };
+        results.scores['VT'] = calculateScaleScore('VT', scaleItemIndices['VT'], 2, {
+             minSum: 4, range: 20,
+             recode: {
+                 22: vtRecodeMap, // Q9a (vt1)
+                 26: vtRecodeMap  // Q9e (vt2)
+                 // Q9g(vt3), Q9i(vt4) non sono ricodificati prima della somma in SPSS
+             }
+         });
+
+        // MH - Salute Mentale (5 item, min 3 validi)
+        // Item mh1(Q9b), mh2(Q9c), mh4(Q9f) sono negativi (1=Peggiore -> 6=Migliore).
+        // Item mh3(Q9d), mh5(Q9h) sono positivi (1=Migliore -> 6=Peggiore in SPSS recode).
+        // SPSS li somma DOPO aver ricodificato mh3, mh5.
+        // Formula finale: ((mhg - 5) / 25) * 100. Min sum=5*1=5. Max sum=5*6=30. Range=25.
+        const mhRecodeMap = { 1: 6, 2: 5, 3: 4, 4: 3, 5: 2, 6: 1 };
+        results.scores['MH'] = calculateScaleScore('MH', scaleItemIndices['MH'], 3, {
+             minSum: 5, range: 25,
+             recode: {
+                 25: mhRecodeMap, // Q9d (mh3)
+                 29: mhRecodeMap  // Q9h (mh5)
+                // mh1, mh2, mh4 non ricodificati pre-somma
+             }
+         });
+
+        // SF - Funzionamento Sociale (2 item, min 1 valido)
+        // Item sf1(Q6) è positivo (1=Migliore -> 5=Peggiore in SPSS recode).
+        // Item sf2(Q10) è negativo (1=Peggiore -> 5=Migliore).
+        // SPSS somma DOPO aver ricodificato sf1.
+        // Formula finale: ((sfg - 2) / 8) * 100. Min sum=2*1=2. Max sum=2*5=10. Range=8.
+        const sfRecodeMap = { 1: 5, 2: 4, 3: 3, 4: 2, 5: 1 };
+        results.scores['SF'] = calculateScaleScore('SF', scaleItemIndices['SF'], 1, {
+             minSum: 2, range: 8,
+             recode: {
+                 19: sfRecodeMap // Q6 (sf1)
+                 // Q10(sf2) non ricodificato pre-somma
+             }
+         });
+
+        // BP - Dolore Fisico (2 item, min 1 valido) - Logica Complessa SPSS
+        function calculateBPScore() {
+             const bp1_raw = rawScores[20]; // Q7 (1-6)
+             const bp2_raw = rawScores[21]; // Q8 (1-5)
+             let bp1rec = null;
+             let bp2rec = null;
+
+             // Validazione iniziale
+             const bp1_valid = bp1_raw !== null && bp1_raw >= 1 && bp1_raw <= 6;
+             const bp2_valid = bp2_raw !== null && bp2_raw >= 1 && bp2_raw <= 5;
+
+             if (!bp1_valid && !bp2_valid) return null; // Entrambi mancanti o invalidi
+
+            // Recode bp1 (Q7) -> bp1rec (Scala 1-6 invertita e mappata)
+             const bp1RecodeVals = { 1: 6, 2: 5.4, 3: 4.2, 4: 3.1, 5: 2.2, 6: 1 };
+             if (bp1_valid) {
+                 bp1rec = bp1RecodeVals[bp1_raw];
+             }
+
+             // Recode bp2 (Q8) -> bp2rec (dipende da bp1)
+             if (bp2_valid) {
+                 if (bp1_valid && bp1_raw === 1) { // Se bp1 == 1
+                     const bp2RecodeMap1 = { 1: 6, 2: 6, 3: 6, 4: 6, 5: 6 }; // Mantenuto come da SPSS (anche se sembra strano)
+                     bp2rec = bp2RecodeMap1[bp2_raw];
+                 } else if (bp1_valid && bp1_raw >= 2) { // Se bp1 >= 2
+                     const bp2RecodeMap2 = { 1: 5, 2: 4, 3: 3, 4: 2, 5: 1 };
+                     bp2rec = bp2RecodeMap2[bp2_raw];
+                 } else if (!bp1_valid) { // Se bp1 è mancante
+                     const bp2RecodeMapMissingBp1 = { 1: 6, 2: 4.75, 3: 3.5, 4: 2.25, 5: 1 };
+                     bp2rec = bp2RecodeMapMissingBp1[bp2_raw];
+                 }
+             }
+
+             // Imputazione se uno è mancante (come da SPSS DO IF MISSING...)
+             if (bp1_valid && !bp2_valid) {
+                 bp2rec = bp1rec; // Imputa bp1rec a bp2rec
+             } else if (!bp1_valid && bp2_valid) {
+                 bp1rec = bp2rec; // Imputa bp2rec a bp1rec
+             }
+
+             // Se dopo tutto questo uno è ancora null, non calcoliamo
+             if (bp1rec === null || bp2rec === null) return null;
+
+             // Calcolo finale
+             const bpg = bp1rec + bp2rec;
+             const bp_score = ((bpg - 2) / 10) * 100; // Min sum = 1+1=2. Max sum = 6+6=12. Range = 10.
+             return bp_score;
+         }
+        results.scores['BP'] = calculateBPScore();
+
+        // GH - Salute Generale (5 item, min 3 validi)
+        // Item gh1(Q1) recode speciale. gh3(Q11b), gh5(Q11d) recode standard inverso. gh2(Q11a), gh4(Q11c) non recode pre-somma.
+        // Formula: ((ghg - 5) / 20) * 100. Min sum=5*1=5. Max sum=5*5=25. Range=20.
+        const gh1RecodeMap = { 1: 5, 2: 4.4, 3: 3.4, 4: 2, 5: 1 };
+        const ghStdRecodeMap = { 1: 5, 2: 4, 3: 3, 4: 2, 5: 1 };
+        results.scores['GH'] = calculateScaleScore('GH', scaleItemIndices['GH'], 3, {
+             minSum: 5, range: 20,
+             recode: {
+                  0: gh1RecodeMap, // Q1 (gh1)
+                 33: ghStdRecodeMap, // Q11b (gh3)
+                 35: ghStdRecodeMap  // Q11d (gh5)
+                 // gh2 (Q11a), gh4 (Q11c) non ricodificati pre-somma
+             }
+         });
+
+         // HT - Health Transition (1 item, non richiede imputazione o soglia)
+         const htRaw = rawScores[1]; // Q2
+         if (htRaw !== null && htRaw >= 1 && htRaw <= 5) {
+            // Scala invertita: 1=Molto meglio(100), 5=Molto peggio(0)
+            const htRecodeMap = { 1: 100, 2: 75, 3: 50, 4: 25, 5: 0 };
+            results.scores['HT'] = htRecodeMap[htRaw];
+         } else {
+            results.scores['HT'] = null;
+         }
+
+
+        // 3. Calcolo Z-Scores
+        let allScoresValidForSummaries = true;
+        for (const scale in usMeans) {
+            const score = results.scores[scale];
+            if (score !== null && !isNaN(score)) {
+                results.zScores[scale] = (score - usMeans[scale]) / usSDs[scale];
+            } else {
+                results.zScores[scale] = null;
+                allScoresValidForSummaries = false; // Se manca uno Z-score, non possiamo calcolare ISF/ISM
+            }
+        }
+
+        // 4. Calcolo Indici Sintetici (ISF/PCS, ISM/MCS)
+        if (allScoresValidForSummaries) {
+            let praw = 0;
+            let mraw = 0;
+            for (const scale in weights.PCS) {
+                praw += results.zScores[scale] * weights.PCS[scale];
+                mraw += results.zScores[scale] * weights.MCS[scale];
+            }
+            results.summaries['PCS'] = (praw * 10) + 50; // ISF
+            results.summaries['MCS'] = (mraw * 10) + 50; // ISM
+        } else {
+            results.summaries['PCS'] = null;
+            results.summaries['MCS'] = null;
+        }
+
+        return results;
+    }
+
+    // --- Inizializzazione Grafico ---
+     function initChart() {
+         const ctx = document.getElementById('scoresChart').getContext('2d');
+         // Manteniamo le 8 scale + HT nel grafico
+         const chartLabels = ['PF', 'RP', 'BP', 'GH', 'VT', 'SF', 'RE', 'MH', 'HT'];
+         const chartDisplayLabels = [
+            'Att. Fisica (PF)', 'R. Fisico (RP)', 'Dolore (BP)', 'Salute Gen. (GH)',
+            'Vitalità (VT)', 'Funz. Sociale (SF)', 'R. Emotivo (RE)', 'Salute Mentale (MH)',
+            'Trans. Salute (HT)'
+         ];
+         const backgroundColors = ['#4BC0C0', '#FF6384', '#FFCE56', '#36A2EB', '#9966FF', '#FF9F40', '#C9CBCF', '#4D5360', '#AABBCC'];
+         const borderColors = backgroundColors;
+
+         scoresChartInstance = new Chart(ctx, {
+             type: 'bar',
+             data: {
+                 labels: chartDisplayLabels,
+                 datasets: [{
+                     label: 'Punteggi SF-36 (0-100, Logica SPSS)',
+                     data: Array(chartLabels.length).fill(0),
+                     backgroundColor: backgroundColors,
+                     borderColor: borderColors,
+                     borderWidth: 1,
+                     // Aggiungiamo array per memorizzare i valori reali per i tooltip
+                     originalScores: Array(chartLabels.length).fill('N/D'),
+                     scaleKeys: chartLabels // Memorizziamo le chiavi per l'aggiornamento
+                 }]
+             },
+             options: {
+                 responsive: true, maintainAspectRatio: false,
+                 indexAxis: 'x', // Barre verticali
+                 scales: {
+                     y: { beginAtZero: true, max: 100, title: { display: true, text: 'Punteggio (0-100)' }},
+                     x: { title: { display: true, text: 'Dimensioni SF-36' }}
+                 },
+                 plugins: {
+                     legend: { display: false },
+                     tooltip: {
+                         callbacks: {
+                             label: function(context) {
+                                 let label = context.dataset.label || '';
+                                 if (label) { label += ': '; }
+                                 // Usa l'array 'originalScores' per mostrare il valore N/D o numerico formattato
+                                 const originalScore = context.chart.data.datasets[context.datasetIndex].originalScores[context.dataIndex];
+                                 label += originalScore;
+                                 return label;
+                             }
+                         }
+                     }
+                 }
+             }
+         });
+     }
+
+    // --- Funzione Principale & Aggiornamento UI ---
+    function updateScoresAndChart() {
+        // Leggi tutti gli input grezzi
+        allAnswers = [];
+        const inputs = document.querySelectorAll('.score-input');
+        inputs.forEach(input => {
+            const index = parseInt(input.getAttribute('data-index'));
+            const { value } = getRawValue(input); // getRawValue gestisce già la validazione e lo stile
+            allAnswers[index] = value; // Memorizza il valore grezzo o null
+        });
+
+        // Calcola tutti i punteggi usando la nuova logica SPSS
+        const results = calculateSf36ScoresSPSS(allAnswers);
+
+        // Aggiorna tabella HTML
+        for (const scale in results.scores) {
+            const score = results.scores[scale];
+            const displayValue = (score === null || isNaN(score)) ? 'N/D' : score.toFixed(2);
+            const element = document.getElementById(`score_${scale.toLowerCase()}`);
+            if (element) {
+                element.textContent = displayValue;
+                if (displayValue === 'N/D') { element.classList.add('na-score'); }
+                else { element.classList.remove('na-score'); }
+            }
+         }
+
+        for (const scale in results.zScores) {
+             const zScore = results.zScores[scale];
+             const displayValue = (zScore === null || isNaN(zScore)) ? 'N/D' : zScore.toFixed(2);
+             const element = document.getElementById(`zscore_${scale.toLowerCase()}`);
+             if (element) {
+                 element.textContent = displayValue;
+                 if (displayValue === 'N/D') { element.classList.add('na-score'); }
+                 else { element.classList.remove('na-score'); }
+             }
+        }
+
+        for (const summary in results.summaries) {
+             const summaryScore = results.summaries[summary];
+             const displayValue = (summaryScore === null || isNaN(summaryScore)) ? 'N/D' : summaryScore.toFixed(2);
+             const element = document.getElementById(`summary_${summary.toLowerCase()}`);
+             if (element) {
+                 element.textContent = displayValue;
+                 if (displayValue === 'N/D') { element.classList.add('na-score'); }
+                 else { element.classList.remove('na-score'); }
+             }
+        }
+
+
+        // Aggiorna grafico (con i punteggi 0-100)
+        if (scoresChartInstance) {
+            const chartData = [];
+            const tooltipData = [];
+            const chartKeys = scoresChartInstance.data.datasets[0].scaleKeys; // Prendi le chiavi dal dataset
+            chartKeys.forEach(key => {
+                const score = results.scores[key];
+                 // Per il grafico, usa 0 se N/D, altrimenti il valore arrotondato
+                 chartData.push((score === null || isNaN(score)) ? 0 : score);
+                 // Per il tooltip, usa 'N/D' o il valore formattato
+                 tooltipData.push((score === null || isNaN(score)) ? 'N/D' : score.toFixed(2));
+            });
+
+            scoresChartInstance.data.datasets[0].data = chartData;
+            scoresChartInstance.data.datasets[0].originalScores = tooltipData;
+            scoresChartInstance.update();
+        }
+    }
+
+    // --- Event Listener ---
+    document.addEventListener('DOMContentLoaded', () => {
+        initChart();
+        const inputs = document.querySelectorAll('.score-input');
+        inputs.forEach(input => {
+            // Verifica data-index per sicurezza
+            if (!input.hasAttribute('data-index')) {
+                console.warn("Input senza data-index:", input.id);
+            }
+             // Aggiungi listener 'input' per aggiornamento immediato E 'blur' per sicurezza
+             input.addEventListener('input', updateScoresAndChart);
+             input.addEventListener('blur', updateScoresAndChart); // Riesegue il calcolo quando si lascia il campo
+        });
+        updateScoresAndChart(); // Calcola all'inizio (con valori vuoti o default)
+    });
+
+</script>
+
+</body>
+</html>

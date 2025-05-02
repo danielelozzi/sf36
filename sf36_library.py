@@ -1,13 +1,14 @@
-# sf36_calculator_cli.py
-# Library and Command-Line Tool for SF-36 Scoring V3
+# sf36_library.py
+# Library and Command-Line Tool for SF-36 Scoring V6
 # Includes: 0-100 Scores, Z-Scores (USA), PCS/MCS (USA), T-Scores (ITA, Age/Sex Specific)
+# Aligned with index.html Ver6 scoring logic.
 
 import math
 import argparse
 import json
 
 # -----------------------------------------------------------------------------
-# COSTANTI E DATI DI RIFERIMENTO (da script_ver3.py)
+# COSTANTI E DATI DI RIFERIMENTO (da index.html Ver6)
 # -----------------------------------------------------------------------------
 
 # --- Costanti Standardizzazione USA ---
@@ -43,34 +44,46 @@ AGE_SEX_NORMS = {
 SCALES_ORDER = ['PF', 'RP', 'BP', 'GH', 'VT', 'SF', 'RE', 'MH', 'HT']
 SCALES_FOR_STD = ['PF', 'RP', 'BP', 'GH', 'VT', 'SF', 'RE', 'MH']
 
-# --- Mappatura Indici Item e Ricodifica ---
+# --- Mappatura Indici Item, Range e Ricodifica ---
 SCALE_INDICES = {
     'PF': list(range(2, 12)), 'RP': list(range(12, 16)), 'RE': list(range(16, 19)),
     'VT': [22, 26, 28, 30], 'MH': [23, 24, 25, 27, 29], 'SF': [19, 31],
     'BP': [20, 21], 'GH': [0, 32, 33, 34, 35], 'HT': [1]
 }
+
+# Range validi per ogni item (indice 0-based) -> (min, max)
+ITEM_VALID_RANGES = {
+    0: (1, 5), 1: (1, 5), 2: (1, 3), 3: (1, 3), 4: (1, 3), 5: (1, 3), 6: (1, 3), 7: (1, 3), 8: (1, 3), 9: (1, 3), 10: (1, 3), 11: (1, 3),
+    12: (1, 2), 13: (1, 2), 14: (1, 2), 15: (1, 2), 16: (1, 2), 17: (1, 2), 18: (1, 2),
+    19: (1, 5), 20: (1, 6), 21: (1, 5),
+    22: (1, 6), 23: (1, 6), 24: (1, 6), 25: (1, 6), 26: (1, 6), 27: (1, 6), 28: (1, 6), 29: (1, 6), 30: (1, 6),
+    31: (1, 5), 32: (1, 5), 33: (1, 5), 34: (1, 5), 35: (1, 5)
+}
+
+
+# Tabelle di ricodifica (Raw -> Punteggio 0-100 per l'item)
 RECODE_PF = {1: 0, 2: 50, 3: 100}
 RECODE_RP_RE = {1: 0, 2: 100}
-RECODE_Q9_POS = {1: 100, 2: 80, 3: 60, 4: 40, 5: 20, 6: 0}
-RECODE_Q9_NEG = {1: 0, 2: 20, 3: 40, 4: 60, 5: 80, 6: 100}
-RECODE_SF1 = {1: 0, 2: 25, 3: 50, 4: 75, 5: 100}
-RECODE_SF2 = {1: 0, 2: 25, 3: 50, 4: 75, 5: 100}
-RECODE_BP1 = {1: 100, 2: 80, 3: 60, 4: 40, 5: 20, 6: 0}
-RECODE_BP2 = {1: 100, 2: 75, 3: 50, 4: 25, 5: 0}
-RECODE_GH1 = {1: 100, 2: 75, 3: 50, 4: 25, 5: 0}
-RECODE_GH2 = {1: 0, 2: 25, 3: 50, 4: 75, 5: 100}
-RECODE_GH3 = {1: 100, 2: 75, 3: 50, 4: 25, 5: 0}
-RECODE_GH4 = {1: 0, 2: 25, 3: 50, 4: 75, 5: 100}
-RECODE_GH5 = {1: 100, 2: 75, 3: 50, 4: 25, 5: 0}
-RECODE_HT = {1: 100, 2: 75, 3: 50, 4: 25, 5: 0}
+RECODE_Q9_POS = {1: 100, 2: 80, 3: 60, 4: 40, 5: 20, 6: 0} # 1=Sempre (meglio)
+RECODE_Q9_NEG = {1: 0, 2: 20, 3: 40, 4: 60, 5: 80, 6: 100} # 1=Sempre (peggio)
+RECODE_SF1 = {1: 100, 2: 75, 3: 50, 4: 25, 5: 0} # CORRETTO: 1=Per nulla (meglio) -> 100
+RECODE_SF2 = {1: 0, 2: 25, 3: 50, 4: 75, 5: 100} # 1=Sempre interferito (peggio) -> 0
+RECODE_BP1 = {1: 100, 2: 80, 3: 60, 4: 40, 5: 20, 6: 0} # 1=Nessuno -> 100
+RECODE_BP2 = {1: 100, 2: 75, 3: 50, 4: 25, 5: 0} # 1=Per nulla -> 100
+RECODE_GH1 = {1: 100, 2: 75, 3: 50, 4: 25, 5: 0} # 1=Eccellente -> 100
+RECODE_GH2 = {1: 0, 2: 25, 3: 50, 4: 75, 5: 100} # 1=Ammalarmi CV (peggio) -> 0
+RECODE_GH3 = {1: 100, 2: 75, 3: 50, 4: 25, 5: 0} # 1=Come altri CV (meglio) -> 100
+RECODE_GH4 = {1: 0, 2: 25, 3: 50, 4: 75, 5: 100} # 1=Peggiorando CV (peggio) -> 0
+RECODE_GH5 = {1: 100, 2: 75, 3: 50, 4: 25, 5: 0} # 1=Ottima salute CV (meglio) -> 100
+RECODE_HT = {1: 100, 2: 75, 3: 50, 4: 25, 5: 0} # 1=Migliore -> 100
 
 ITEM_RECODE_MAP = {
     **{i: RECODE_PF for i in SCALE_INDICES['PF']},
     **{i: RECODE_RP_RE for i in SCALE_INDICES['RP']},
     **{i: RECODE_RP_RE for i in SCALE_INDICES['RE']},
-    22: RECODE_Q9_POS, 26: RECODE_Q9_POS, 28: RECODE_Q9_NEG, 30: RECODE_Q9_NEG, # VT
-    23: RECODE_Q9_NEG, 24: RECODE_Q9_NEG, 25: RECODE_Q9_POS, 27: RECODE_Q9_NEG, 29: RECODE_Q9_POS, # MH
-    19: RECODE_SF1, 31: RECODE_SF2, # SF
+    22: RECODE_Q9_POS, 26: RECODE_Q9_POS, 28: RECODE_Q9_NEG, 30: RECODE_Q9_NEG, # VT (Pos: 9a, 9e; Neg: 9g, 9i)
+    23: RECODE_Q9_NEG, 24: RECODE_Q9_NEG, 25: RECODE_Q9_POS, 27: RECODE_Q9_NEG, 29: RECODE_Q9_POS, # MH (Pos: 9d, 9h; Neg: 9b, 9c, 9f)
+    19: RECODE_SF1, 31: RECODE_SF2, # SF (Q6 ora corretto, Q10)
     20: RECODE_BP1, 21: RECODE_BP2, # BP
     0: RECODE_GH1, 32: RECODE_GH2, 33: RECODE_GH3, 34: RECODE_GH4, 35: RECODE_GH5, # GH
     1: RECODE_HT # HT
@@ -87,55 +100,70 @@ def calculate_sf36_all_scores(answers, age=None, sex=None):
     e T-Scores per Età/Sesso (ITA).
 
     Args:
-        answers (list): Lista di 36 risposte (int o None).
-        age (int, optional): Età del paziente. Default None.
-        sex (int, optional): Sesso del paziente (1=Maschio, 2=Femmina). Default None.
+        answers (list): Lista di 36 risposte (int, float, str convertibile a int, o None).
+        age (int, str, optional): Età del paziente. Default None.
+        sex (int, str, optional): Sesso del paziente (1='Male', 2='Female'). Default None.
 
     Returns:
         dict: Contiene 'scores_0_100', 'z_scores_usa', 'summary_scores_usa' (PCS/MCS),
               't_scores_ita_age_sex'. Valori sono float o None se non calcolabili.
-              Include anche 'input_data' con i valori usati.
-              Restituisce None se l'input 'answers' non è valido.
+              Include anche 'input_data' con i valori usati e eventuali 'warnings'.
     """
     if not isinstance(answers, list) or len(answers) != 36:
-        # print("Errore input: la lista di risposte deve contenere 36 elementi.")
-        raise ValueError("Input 'answers' must be a list of 36 elements (int or None).")
+        raise ValueError("Input 'answers' must be a list of 36 elements.")
 
-    # Verifica tipi in input answers
-    processed_answers = []
+    processed_answers = [None] * 36
+    input_warnings = []
+
+    # 1. Process and Validate Answers
     for i, ans in enumerate(answers):
-        if ans is None:
-            processed_answers.append(None)
-        elif isinstance(ans, int):
-            processed_answers.append(ans)
-        else:
-            try: # Prova a convertire in int, utile se arrivano da stringa
-                processed_answers.append(int(ans))
-            except (ValueError, TypeError):
-                 raise ValueError(f"Answer at index {i} ('{ans}') is not a valid integer or None.")
+        item_range = ITEM_VALID_RANGES.get(i)
+        min_val, max_val = item_range if item_range else (None, None)
 
-    answers = processed_answers # Usa le risposte processate
+        if ans is None or (isinstance(ans, str) and ans.strip().lower() in ['none', 'null', 'na', '']):
+            processed_answers[i] = None
+            continue
 
-    # Verifica età e sesso
+        try:
+            val_num = float(str(ans).replace(',', '.')) # Handle potential float/comma input first
+            if val_num != math.floor(val_num):
+                 raise ValueError("Not an integer") # Consider non-integer as invalid
+            val_int = int(val_num)
+
+            if min_val is not None and max_val is not None:
+                if not (min_val <= val_int <= max_val):
+                     input_warnings.append(f"Answer {i+1} ('{ans}') out of range ({min_val}-{max_val}). Treated as missing.")
+                     processed_answers[i] = None
+                else:
+                     processed_answers[i] = val_int
+            else: # Should not happen with ITEM_VALID_RANGES defined
+                 processed_answers[i] = val_int # Store if no range check possible
+
+        except (ValueError, TypeError):
+            input_warnings.append(f"Invalid answer {i+1} ('{ans}'). Must be integer or None. Treated as missing.")
+            processed_answers[i] = None
+
+    answers = processed_answers # Use validated & processed answers
+
+    # 2. Process and Validate Age/Sex
     age_num = None
     sex_num = None
-    input_warnings = []
-    if age is not None:
+    if age is not None and str(age).strip() != "":
         try:
-            age_num = int(age)
+            age_num = int(float(str(age).strip()))
             if age_num <= 0:
-                 input_warnings.append(f"Age '{age}' is not positive. Age/Sex T-Scores may not be calculated.")
-                 age_num = None # Tratta come non valido per il calcolo T-score
+                 input_warnings.append(f"Age '{age}' is not positive. Age/Sex T-Scores not calculated.")
+                 age_num = None
         except (ValueError, TypeError):
-            input_warnings.append(f"Age '{age}' is not a valid integer. Age/Sex T-Scores may not be calculated.")
-    if sex is not None:
+            input_warnings.append(f"Age '{age}' is not a valid integer. Age/Sex T-Scores not calculated.")
+    if sex is not None and str(sex).strip() != "":
         try:
-            sex_num = int(sex)
+            sex_num = int(float(str(sex).strip()))
             if sex_num not in [1, 2]:
-                input_warnings.append(f"Sex '{sex}' is not 1 (Male) or 2 (Female). Age/Sex T-Scores may not be calculated.")
-                sex_num = None # Tratta come non valido per il calcolo T-score
+                input_warnings.append(f"Sex '{sex}' is not 1 (Male) or 2 (Female). Age/Sex T-Scores not calculated.")
+                sex_num = None
         except (ValueError, TypeError):
-            input_warnings.append(f"Sex '{sex}' is not a valid integer. Age/Sex T-Scores may not be calculated.")
+            input_warnings.append(f"Sex '{sex}' is not a valid integer (1 or 2). Age/Sex T-Scores not calculated.")
 
 
     results = {
@@ -151,55 +179,54 @@ def calculate_sf36_all_scores(answers, age=None, sex=None):
         't_scores_ita_age_sex': {scale: None for scale in SCALES_FOR_STD}
     }
 
-    # 1. --- Calcolo Punteggi Scale 0-100 ---
+    # 3. --- Calcolo Punteggi Scale 0-100 ---
+    # Uses the method of averaging the 0-100 recoded scores of valid items
     for scale, indices in SCALE_INDICES.items():
-        if scale == 'HT': continue # HT calcolato separatamente
+        if scale == 'HT': continue # HT calculated separately
 
         num_items_in_scale = len(indices)
-        # Usa le 'answers' già validate
-        raw_answers_for_scale = [answers[idx] if 0 <= idx < len(answers) else None for idx in indices]
+        raw_answers_for_scale = [answers[idx] for idx in indices] # Use already validated answers
 
         recoded_scores = []
         valid_item_count = 0
-        missing_count = 0
 
         for i, raw_answer in enumerate(raw_answers_for_scale):
             item_index = indices[i]
             recode_map_for_item = ITEM_RECODE_MAP.get(item_index)
 
-            if raw_answer is not None and recode_map_for_item and raw_answer in recode_map_for_item:
+            # Check if raw_answer is valid (not None after initial validation)
+            if raw_answer is not None and recode_map_for_item:
                 recoded_value = recode_map_for_item.get(raw_answer)
+                # Check if recode value exists (should always if range check passed)
                 if recoded_value is not None:
                      recoded_scores.append(recoded_value)
                      valid_item_count += 1
-                else: missing_count += 1
-            elif raw_answer is None:
-                 missing_count += 1
-            # Ignora valori non None ma non nella mappa (errore input gestito prima)
+            # else: treat None or value not in recode map (due to earlier range error) as missing
 
-        # Calcola punteggio se abbastanza item validi
+        # Calculate score if enough valid items
         min_valid = math.ceil(num_items_in_scale / 2.0) if num_items_in_scale > 1 else 1
         if valid_item_count >= min_valid:
+            # Score is the average of the 0-100 contributions of the valid items
             results['scores_0_100'][scale] = sum(recoded_scores) / valid_item_count
         else:
             results['scores_0_100'][scale] = None
 
     # Calcolo HT (0-100)
     ht_index = SCALE_INDICES['HT'][0]
-    ht_raw = answers[ht_index] if 0 <= ht_index < len(answers) else None
+    ht_raw = answers[ht_index] # Already validated
     recode_map_ht = ITEM_RECODE_MAP.get(ht_index)
-    if ht_raw is not None and recode_map_ht and ht_raw in recode_map_ht:
+    if ht_raw is not None and recode_map_ht:
         results['scores_0_100']['HT'] = recode_map_ht.get(ht_raw)
     else:
         results['scores_0_100']['HT'] = None
 
-    # 2. --- Calcolo Z-Scores (Standardizzazione USA) ---
+    # 4. --- Calcolo Z-Scores (Standardizzazione USA) ---
     all_scores_valid_for_summaries = True
     for scale in SCALES_FOR_STD:
         score = results['scores_0_100'].get(scale)
         if score is not None and not math.isnan(score) and scale in US_MEANS and scale in US_SDS:
             try:
-                if US_SDS[scale] == 0: raise ZeroDivisionError # Evita divisione per zero
+                if US_SDS[scale] == 0: raise ZeroDivisionError
                 results['z_scores_usa'][scale] = (score - US_MEANS[scale]) / US_SDS[scale]
             except ZeroDivisionError:
                 results['z_scores_usa'][scale] = None
@@ -208,27 +235,26 @@ def calculate_sf36_all_scores(answers, age=None, sex=None):
             results['z_scores_usa'][scale] = None
             all_scores_valid_for_summaries = False
 
-    # 3. --- Calcolo Indici Sintetici USA (PCS/MCS) ---
+    # 5. --- Calcolo Indici Sintetici USA (PCS/MCS) ---
     if all_scores_valid_for_summaries:
         try:
             pcs_raw = sum(results['z_scores_usa'][scale] * WEIGHTS['PCS'][scale] for scale in SCALES_FOR_STD)
             mcs_raw = sum(results['z_scores_usa'][scale] * WEIGHTS['MCS'][scale] for scale in SCALES_FOR_STD)
             results['summary_scores_usa']['PCS'] = (pcs_raw * 10) + 50
             results['summary_scores_usa']['MCS'] = (mcs_raw * 10) + 50
-        except Exception as e:
-            # print(f"Errore nel calcolo PCS/MCS: {e}") # Log interno
+        except Exception: # Catch any potential issues during calculation
             results['summary_scores_usa']['PCS'] = None
             results['summary_scores_usa']['MCS'] = None
     else:
         results['summary_scores_usa']['PCS'] = None
         results['summary_scores_usa']['MCS'] = None
 
-    # 4. --- Calcolo Punteggi T Standardizzati per Età/Sesso (ITA) ---
-    # Usa age_num e sex_num validati all'inizio
+    # 6. --- Calcolo Punteggi T Standardizzati per Età/Sesso (ITA) ---
+    # Uses age_num and sex_num validated in step 2
     age_class = 0
     can_calculate_age_sex = False
 
-    if age_num is not None and age_num > 0:
+    if age_num is not None: # Already validated > 0
         if age_num <= 24: age_class = 2
         elif age_num <= 34: age_class = 3
         elif age_num <= 44: age_class = 4
@@ -237,26 +263,36 @@ def calculate_sf36_all_scores(answers, age=None, sex=None):
         elif age_num <= 74: age_class = 7
         else: age_class = 8 # > 74
 
-    if sex_num in [1, 2] and age_class in range(2, 9):
+    if sex_num is not None and age_class > 0: # Sex already validated as 1 or 2
          can_calculate_age_sex = True
 
     if can_calculate_age_sex:
         for scale in SCALES_FOR_STD:
             score_0100 = results['scores_0_100'].get(scale)
             try:
-                norms = AGE_SEX_NORMS[sex_num][age_class][scale]
-                mean = norms['mean']
-                sd = norms['sd']
-                if score_0100 is not None and not math.isnan(score_0100) and sd is not None and sd != 0:
-                    t_score = (((score_0100 - mean) / sd) * 10) + 50
-                    results['t_scores_ita_age_sex'][scale] = t_score
+                # Ensure keys exist before accessing
+                if sex_num in AGE_SEX_NORMS and \
+                   age_class in AGE_SEX_NORMS[sex_num] and \
+                   scale in AGE_SEX_NORMS[sex_num][age_class]:
+
+                    norms = AGE_SEX_NORMS[sex_num][age_class][scale]
+                    mean = norms.get('mean')
+                    sd = norms.get('sd')
+
+                    if score_0100 is not None and not math.isnan(score_0100) and \
+                       mean is not None and sd is not None and sd != 0:
+                        t_score = (((score_0100 - mean) / sd) * 10) + 50
+                        results['t_scores_ita_age_sex'][scale] = t_score
+                    else:
+                        # Score missing, norms missing, or SD is zero
+                        results['t_scores_ita_age_sex'][scale] = None
                 else:
-                    results['t_scores_ita_age_sex'][scale] = None # Mancante o SD=0
-            except (KeyError, TypeError, ZeroDivisionError) as e:
-                # Log interno opzionale
-                # print(f"Errore T-score ITA per {scale} (S={sex_num}, AC={age_class}): {e}")
+                    # Norms not found for this specific sex/age/scale combination
+                     results['t_scores_ita_age_sex'][scale] = None
+
+            except Exception: # Catch potential errors during calculation
                 results['t_scores_ita_age_sex'][scale] = None
-    # else: T-scores restano None se age/sex non validi o mancanti
+    # else: T-scores remain None if age/sex not valid or missing
 
     return results
 
@@ -279,8 +315,13 @@ def parse_answers(answers_str):
         if part_stripped in ['none', 'null', 'na', '']:
             answers.append(None)
         else:
+            # Allow potential conversion from string int/float first
             try:
-                answers.append(int(part_stripped))
+                 num_val = float(part_stripped.replace(',','.')) # Handle comma decimal just in case
+                 if num_val == math.floor(num_val): # Check if it's effectively an integer
+                     answers.append(int(num_val))
+                 else:
+                     raise ValueError(f"Value '{part}' at position {i+1} is not an integer.")
             except ValueError:
                 raise ValueError(f"Invalid value '{part}' at position {i+1}. Must be integer or None/blank.")
     return answers
@@ -292,13 +333,12 @@ def format_results_text(results):
 
     # Input Data Info
     output.append("\nInput Data:")
-    # Mostra solo i primi/ultimi item per brevità
     answers_display = [str(a) if a is not None else 'None' for a in results['input_data']['answers']]
     if len(answers_display) > 10:
          answers_str = ",".join(answers_display[:5]) + ",...," + ",".join(answers_display[-5:])
     else:
          answers_str = ",".join(answers_display)
-    output.append(f"  Answers: [{answers_str}]")
+    output.append(f"  Answers Used: [{answers_str}]") # Indicate these are validated/used values
     output.append(f"  Age Provided: {results['input_data']['age_provided']}")
     output.append(f"  Sex Provided: {results['input_data']['sex_provided']}")
     if results['input_data']['warnings']:
@@ -327,10 +367,9 @@ def format_results_text(results):
 
     # T-Scores ITA
     output.append("\nT-Scores (Italian Norms, Age/Sex Specific):")
-    # Verifica se sono stati calcolati
     t_scores_available = any(v is not None for v in results['t_scores_ita_age_sex'].values())
     if not t_scores_available:
-         output.append("  (Not calculated - check Age/Sex input)")
+         output.append("  (Not calculated - check Age/Sex input or validity)")
     else:
         for scale in SCALES_FOR_STD:
             score = results['t_scores_ita_age_sex'].get(scale)
@@ -345,7 +384,7 @@ def format_results_text(results):
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Calculate SF-36 scores (0-100, Z-USA, PCS/MCS-USA, T-ITA Age/Sex).",
+        description="Calculate SF-36 scores (0-100, Z-USA, PCS/MCS-USA, T-ITA Age/Sex). Version 6.",
         formatter_class=argparse.RawTextHelpFormatter
     )
     parser.add_argument(
@@ -355,13 +394,10 @@ def main():
     )
     parser.add_argument(
         "--age",
-        type=int,
         help="OPTIONAL. Patient's age in years (integer > 0)."
     )
     parser.add_argument(
         "--sex",
-        type=int,
-        choices=[1, 2],
         help="OPTIONAL. Patient's sex (1 for Male, 2 for Female)."
     )
     parser.add_argument(
@@ -375,32 +411,26 @@ def main():
 
     try:
         answers_list = parse_answers(args.answers)
+        # Pass age/sex directly as they might be None or strings
         results = calculate_sf36_all_scores(answers_list, age=args.age, sex=args.sex)
 
         if args.output_format == 'json':
-            # Pulisci per JSON: rimuovi NaN, converti a tipi serializzabili se necessario
-            # (In questo caso, i None sono già JSON validi)
             print(json.dumps(results, indent=2))
         else:
             print(format_results_text(results))
 
     except ValueError as e:
         print(f"Input Error: {e}")
-        parser.print_usage() # Mostra come usare
+        parser.print_usage() # Show how to use
     except Exception as e:
         print(f"An unexpected error occurred: {e}")
+        import traceback
+        traceback.print_exc()
 
 
 if __name__ == "__main__":
     main()
 
 # Example Usage from command line:
-# python sf36_calculator_cli.py --answers "3,2,1,1,2,3,3,2,1,2,2,1,2,1,2,1,2,1,2,5,1,3,4,6,2,3,5,6,1,5,2,4,3,5,1,2" --age 45 --sex 1
-# python sf36_calculator_cli.py --answers "...,None,..." --age 30 --sex 2 --output-format json
-
-# Example Usage as library:
-# import sf36_calculator_cli
-# my_answers = [3, 2, 1, 1, 2, 3, 3, 2, 1, 2, 2, 1, 2, 1, 2, 1, 2, 1, 2, 5, 1, 3, 4, 6, 2, 3, 5, 6, 1, 5, 2, 4, 3, 5, 1, None]
-# results_dict = sf36_calculator_cli.calculate_sf36_all_scores(my_answers, age=50, sex=2)
-# print(results_dict['scores_0_100'])
-# print(results_dict['t_scores_ita_age_sex']['PF'])
+# python sf36_library.py --answers "3,2,1,1,2,3,3,2,1,2,2,1,2,1,2,1,2,1,2,5,1,3,4,6,2,3,5,6,1,5,2,4,3,5,1,2" --age 45 --sex 1
+# python sf36_library.py --answers "...,None,..." --age 30 --sex 2 --output-format json

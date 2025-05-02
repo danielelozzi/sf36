@@ -46,6 +46,7 @@
         input.invalid-input { border-color: red; background-color: #ffecec; }
          .subheader { background-color: #f0f0f0; font-weight: bold; font-style: italic;}
          .hidden-section { display: none; } /* Per nascondere sezioni */
+         .scale-info ul { margin: 0; padding-left: 15px; font-size: 0.9em; } /* Stile per la lista */
     </style>
 </head>
 <body>
@@ -53,7 +54,7 @@
 <h1>Calcolatore Punteggio SF-36 (Standardizzazione Età/Sesso)</h1>
 <p>Inserisci i valori per ciascuna domanda, l'età e il sesso. Verranno calcolati: Punteggi scale 0-100, Z-scores (vs Pop. USA), Indici Sintetici ISF/ISM (T-score USA), e Punteggi T standardizzati per Età e Sesso (vs Pop. Italiana).</p>
 <p class="notes warning">Se Età o Sesso non vengono inseriti, i punteggi standardizzati per età/sesso e il relativo grafico non saranno calcolati.</p>
-<p class="notes" style="color:purple; font-weight:bold;">Ver5 - Standardizzazione Età/Sesso ITA (Corretto)</p>
+<p class="notes" style="color:purple; font-weight:bold;">Ver6 - Scoring Corretto</p>
 
 <form id="sf36-form" onsubmit="return false;">
     <h3>Dati Demografici</h3>
@@ -92,47 +93,85 @@
             </tr>
         </thead>
         <tbody>
-            <tr><td>Q1 (GH1)</td><td class="question-text">In generale direbbe che la Sua salute è....</td><td class="input-col"><input type="number" id="q1" data-index="0" class="score-input" min="1" max="5" step="1"></td><td class="scale-info">1-5</td></tr>
-            <tr><td>Q2 (HT)</td><td class="question-text">Rispetto a un anno fa, come giudicherebbe, ora, la Sua salute in generale?</td><td class="input-col"><input type="number" id="q2" data-index="1" class="score-input" min="1" max="5" step="1"></td><td class="scale-info">1-5</td></tr>
-            <tr><td colspan="4" class="subheader"><b>Attività Fisica (PF / PF01-PF10)</b></td></tr>
-            <tr><td>Q3a (PF01)</td><td>Attività fisicamente impegnative...</td><td class="input-col"><input type="number" id="q3a" data-index="2" class="score-input" min="1" max="3" step="1"></td><td class="scale-info">1-3</td></tr>
-            <tr><td>Q3b (PF02)</td><td>Attività di moderato impegno fisico...</td><td class="input-col"><input type="number" id="q3b" data-index="3" class="score-input" min="1" max="3" step="1"></td><td class="scale-info">1-3</td></tr>
-            <tr><td>Q3c (PF03)</td><td>Sollevare o portare le borse della spesa</td><td class="input-col"><input type="number" id="q3c" data-index="4" class="score-input" min="1" max="3" step="1"></td><td class="scale-info">1-3</td></tr>
-            <tr><td>Q3d (PF04)</td><td>Salire qualche piano di scale</td><td class="input-col"><input type="number" id="q3d" data-index="5" class="score-input" min="1" max="3" step="1"></td><td class="scale-info">1-3</td></tr>
-            <tr><td>Q3e (PF05)</td><td>Salire un piano di scale</td><td class="input-col"><input type="number" id="q3e" data-index="6" class="score-input" min="1" max="3" step="1"></td><td class="scale-info">1-3</td></tr>
-            <tr><td>Q3f (PF06)</td><td>Piegarsi, inginocchiarsi o chinarsi</td><td class="input-col"><input type="number" id="q3f" data-index="7" class="score-input" min="1" max="3" step="1"></td><td class="scale-info">1-3</td></tr>
-            <tr><td>Q3g (PF07)</td><td>Camminare per un chilometro</td><td class="input-col"><input type="number" id="q3g" data-index="8" class="score-input" min="1" max="3" step="1"></td><td class="scale-info">1-3</td></tr>
-            <tr><td>Q3h (PF08)</td><td>Camminare per qualche centinaia di metri</td><td class="input-col"><input type="number" id="q3h" data-index="9" class="score-input" min="1" max="3" step="1"></td><td class="scale-info">1-3</td></tr>
-            <tr><td>Q3i (PF09)</td><td>Camminare per circa cento metri</td><td class="input-col"><input type="number" id="q3i" data-index="10" class="score-input" min="1" max="3" step="1"></td><td class="scale-info">1-3</td></tr>
-            <tr><td>Q3j (PF10)</td><td>Fare il bagno o vestirsi da soli</td><td class="input-col"><input type="number" id="q3j" data-index="11" class="score-input" min="1" max="3" step="1"></td><td class="scale-info">1-3</td></tr>
-            <tr><td colspan="4" class="subheader"><b>Limitazioni Ruolo Fisico (RP / RP1-RP4)</b></td></tr>
-            <tr><td>Q4a (RP1)</td><td>Ha ridotto il tempo dedicato al lavoro o ad altre attività</td><td class="input-col"><input type="number" id="q4a" data-index="12" class="score-input" min="1" max="2" step="1"></td><td class="scale-info">1=Sì, 2=No</td></tr>
-            <tr><td>Q4b (RP2)</td><td>Ha reso meno di quanto avrebbe voluto</td><td class="input-col"><input type="number" id="q4b" data-index="13" class="score-input" min="1" max="2" step="1"></td><td class="scale-info">1=Sì, 2=No</td></tr>
-            <tr><td>Q4c (RP3)</td><td>Ha dovuto limitare alcuni tipi di lavoro o di altre attività</td><td class="input-col"><input type="number" id="q4c" data-index="14" class="score-input" min="1" max="2" step="1"></td><td class="scale-info">1=Sì, 2=No</td></tr>
-            <tr><td>Q4d (RP4)</td><td>Ha avuto difficoltà nell'eseguire il lavoro o altre attività...</td><td class="input-col"><input type="number" id="q4d" data-index="15" class="score-input" min="1" max="2" step="1"></td><td class="scale-info">1=Sì, 2=No</td></tr>
-            <tr><td colspan="4" class="subheader"><b>Limitazioni Ruolo Emotivo (RE / RE1-RE3)</b></td></tr>
-            <tr><td>Q5a (RE1)</td><td>Ha ridotto il tempo dedicato al lavoro o ad altre attività</td><td class="input-col"><input type="number" id="q5a" data-index="16" class="score-input" min="1" max="2" step="1"></td><td class="scale-info">1=Sì, 2=No</td></tr>
-            <tr><td>Q5b (RE2)</td><td>Ha reso meno di quanto avrebbe voluto</td><td class="input-col"><input type="number" id="q5b" data-index="17" class="score-input" min="1" max="2" step="1"></td><td class="scale-info">1=Sì, 2=No</td></tr>
-            <tr><td>Q5c (RE3)</td><td>Ha avuto un calo di concentrazione sul lavoro o in altre attività</td><td class="input-col"><input type="number" id="q5c" data-index="18" class="score-input" min="1" max="2" step="1"></td><td class="scale-info">1=Sì, 2=No</td></tr>
-            <tr><td colspan="4" class="subheader"><b>Dolore (BP), Funz. Sociale (SF pt1), Vitalità (VT pt1), Salute Mentale (MH pt1)</b></td></tr>
-            <tr><td>Q6 (SF1)</td><td class="question-text">Nelle ultime quattro settimane, in che misura la Sua salute fisica o il Suo stato emotivo hanno interferito con le normali attività sociali...</td><td class="input-col"><input type="number" id="q6" data-index="19" class="score-input" min="1" max="5" step="1"></td><td class="scale-info">1-5</td></tr>
-            <tr><td>Q7 (BP1)</td><td class="question-text">Quanto dolore fisico ha provato nelle ultime quattro settimane?</td><td class="input-col"><input type="number" id="q7" data-index="20" class="score-input" min="1" max="6" step="1"></td><td class="scale-info">1-6</td></tr>
-            <tr><td>Q8 (BP2)</td><td class="question-text">Nelle ultime quattro settimane, in che misura il dolore L'ha ostacolata nel lavoro che svolge abitualmente...?</td><td class="input-col"><input type="number" id="q8" data-index="21" class="score-input" min="1" max="5" step="1"></td><td class="scale-info">1-5</td></tr>
-            <tr><td>Q9a (VT1)</td><td>Vivace e brillante?</td><td class="input-col"><input type="number" id="q9a" data-index="22" class="score-input" min="1" max="6" step="1"></td><td class="scale-info">1-6</td></tr>
-            <tr><td>Q9b (MH1)</td><td>Molto agitato?</td><td class="input-col"><input type="number" id="q9b" data-index="23" class="score-input" min="1" max="6" step="1"></td><td class="scale-info">1-6</td></tr>
-            <tr><td>Q9c (MH2)</td><td>Così giù di morale che niente avrebbe potuto tirarla su?</td><td class="input-col"><input type="number" id="q9c" data-index="24" class="score-input" min="1" max="6" step="1"></td><td class="scale-info">1-6</td></tr>
-            <tr><td>Q9d (MH3)</td><td>Calmo e sereno?</td><td class="input-col"><input type="number" id="q9d" data-index="25" class="score-input" min="1" max="6" step="1"></td><td class="scale-info">1-6</td></tr>
-            <tr><td>Q9e (VT2)</td><td>Pieno di energia?</td><td class="input-col"><input type="number" id="q9e" data-index="26" class="score-input" min="1" max="6" step="1"></td><td class="scale-info">1-6</td></tr>
-            <tr><td>Q9f (MH4)</td><td>Scoraggiato e triste?</td><td class="input-col"><input type="number" id="q9f" data-index="27" class="score-input" min="1" max="6" step="1"></td><td class="scale-info">1-6</td></tr>
-            <tr><td>Q9g (VT3)</td><td>Sfinito?</td><td class="input-col"><input type="number" id="q9g" data-index="28" class="score-input" min="1" max="6" step="1"></td><td class="scale-info">1-6</td></tr>
-             <tr><td>Q9h (MH5)</td><td>Felice?</td><td class="input-col"><input type="number" id="q9h" data-index="29" class="score-input" min="1" max="6" step="1"></td><td class="scale-info">1-6</td></tr>
-             <tr><td>Q9i (VT4)</td><td>Stanco?</td><td class="input-col"><input type="number" id="q9i" data-index="30" class="score-input" min="1" max="6" step="1"></td><td class="scale-info">1-6</td></tr>
-            <tr><td colspan="4" class="subheader"><b>Funz. Sociale (SF pt2), Salute Generale (GH pt2)</b></td></tr>
-             <tr><td>Q10 (SF2)</td><td class="question-text">Nelle ultime quattro settimane, per quanto tempo la Sua salute fisica o il Suo stato emotivo hanno interferito nelle Sue attività sociali...?</td><td class="input-col"><input type="number" id="q10" data-index="31" class="score-input" min="1" max="5" step="1"></td><td class="scale-info">1-5</td></tr>
-             <tr><td>Q11a (GH2)</td><td>Mi pare di ammalarmi un po' più facilmente degli altri</td><td class="input-col"><input type="number" id="q11a" data-index="32" class="score-input" min="1" max="5" step="1"></td><td class="scale-info">1-5</td></tr>
-             <tr><td>Q11b (GH3)</td><td>La mia salute è come quella degli altri</td><td class="input-col"><input type="number" id="q11b" data-index="33" class="score-input" min="1" max="5" step="1"></td><td class="scale-info">1-5</td></tr>
-             <tr><td>Q11c (GH4)</td><td>Mi aspetto che la mia salute andrà peggiorando</td><td class="input-col"><input type="number" id="q11c" data-index="34" class="score-input" min="1" max="5" step="1"></td><td class="scale-info">1-5</td></tr>
-            <tr><td>Q11d (GH5)</td><td>Godo di ottima salute</td><td class="input-col"><input type="number" id="q11d" data-index="35" class="score-input" min="1" max="5" step="1"></td><td class="scale-info">1-5</td></tr>
+            <tr><td>Q1 (GH1)</td><td class="question-text">In generale, direbbe che la Sua salute è:</td><td class="input-col"><input type="number" id="q1" data-index="0" class="score-input" min="1" max="5" step="1"></td>
+                <td class="scale-info">1-5 <ul><li>1: Eccellente</li><li>2: Molto buona</li><li>3: Buona</li><li>4: Passabile</li><li>5: Scadente</li></ul></td></tr>
+            <tr><td>Q2 (HT)</td><td class="question-text">Rispetto ad un anno fa, come giudicherebbe, ora, la Sua salute in generale?</td><td class="input-col"><input type="number" id="q2" data-index="1" class="score-input" min="1" max="5" step="1"></td>
+                <td class="scale-info">1-5 <ul><li>1: Decisamente migliore</li><li>2: Un po' migliore</li><li>3: Più o meno uguale</li><li>4: Un po' peggiore</li><li>5: Decisamente peggiore</li></ul></td></tr>
+            <tr><td colspan="4" class="subheader"><b>3. La Sua salute La limita attualmente nello svolgimento di queste attività?</b></td></tr>
+            <tr><td>Q3a (PF01)</td><td>Attività fisicamente impegnative, come correre, sollevare oggetti pesanti, praticare sport faticosi</td><td class="input-col"><input type="number" id="q3a" data-index="2" class="score-input" min="1" max="3" step="1"></td>
+                <td class="scale-info">1-3 <ul><li>1: Sì, limita parecchio</li><li>2: Sì, limita parzialmente</li><li>3: No, non limita per nulla</li></ul></td></tr>
+            <tr><td>Q3b (PF02)</td><td>Attività di moderato impegno fisico, come spostare un tavolo, usare l'aspirapolvere, giocare a bocce o fare un giretto in bicicletta</td><td class="input-col"><input type="number" id="q3b" data-index="3" class="score-input" min="1" max="3" step="1"></td>
+                <td class="scale-info">1-3 <ul><li>1: Sì, limita parecchio</li><li>2: Sì, limita parzialmente</li><li>3: No, non limita per nulla</li></ul></td></tr>
+            <tr><td>Q3c (PF03)</td><td>Sollevare o portare le borse della spesa</td><td class="input-col"><input type="number" id="q3c" data-index="4" class="score-input" min="1" max="3" step="1"></td>
+                <td class="scale-info">1-3 <ul><li>1: Sì, limita parecchio</li><li>2: Sì, limita parzialmente</li><li>3: No, non limita per nulla</li></ul></td></tr>
+            <tr><td>Q3d (PF04)</td><td>Salire qualche piano di scale</td><td class="input-col"><input type="number" id="q3d" data-index="5" class="score-input" min="1" max="3" step="1"></td>
+                <td class="scale-info">1-3 <ul><li>1: Sì, limita parecchio</li><li>2: Sì, limita parzialmente</li><li>3: No, non limita per nulla</li></ul></td></tr>
+            <tr><td>Q3e (PF05)</td><td>Salire un piano di scale</td><td class="input-col"><input type="number" id="q3e" data-index="6" class="score-input" min="1" max="3" step="1"></td>
+                <td class="scale-info">1-3 <ul><li>1: Sì, limita parecchio</li><li>2: Sì, limita parzialmente</li><li>3: No, non limita per nulla</li></ul></td></tr>
+            <tr><td>Q3f (PF06)</td><td>Piegarsi, inginocchiarsi o chinarsi</td><td class="input-col"><input type="number" id="q3f" data-index="7" class="score-input" min="1" max="3" step="1"></td>
+                <td class="scale-info">1-3 <ul><li>1: Sì, limita parecchio</li><li>2: Sì, limita parzialmente</li><li>3: No, non limita per nulla</li></ul></td></tr>
+            <tr><td>Q3g (PF07)</td><td>Camminare per un chilometro</td><td class="input-col"><input type="number" id="q3g" data-index="8" class="score-input" min="1" max="3" step="1"></td>
+                <td class="scale-info">1-3 <ul><li>1: Sì, limita parecchio</li><li>2: Sì, limita parzialmente</li><li>3: No, non limita per nulla</li></ul></td></tr>
+            <tr><td>Q3h (PF08)</td><td>Camminare per qualche centinaia di metri</td><td class="input-col"><input type="number" id="q3h" data-index="9" class="score-input" min="1" max="3" step="1"></td>
+                <td class="scale-info">1-3 <ul><li>1: Sì, limita parecchio</li><li>2: Sì, limita parzialmente</li><li>3: No, non limita per nulla</li></ul></td></tr>
+            <tr><td>Q3i (PF09)</td><td>Camminare per circa cento metri</td><td class="input-col"><input type="number" id="q3i" data-index="10" class="score-input" min="1" max="3" step="1"></td>
+                <td class="scale-info">1-3 <ul><li>1: Sì, limita parecchio</li><li>2: Sì, limita parzialmente</li><li>3: No, non limita per nulla</li></ul></td></tr>
+            <tr><td>Q3j (PF10)</td><td>Fare il bagno o vestirsi da soli</td><td class="input-col"><input type="number" id="q3j" data-index="11" class="score-input" min="1" max="3" step="1"></td>
+                <td class="scale-info">1-3 <ul><li>1: Sì, limita parecchio</li><li>2: Sì, limita parzialmente</li><li>3: No, non limita per nulla</li></ul></td></tr>
+            <tr><td colspan="4" class="subheader"><b>4. Nelle ultime 4 settimane, ha riscontrato i seguenti problemi sul lavoro o nelle altre attività quotidiane, a causa della Sua salute fisica?</b></td></tr>
+            <tr><td>Q4a (RP1)</td><td>Ha ridotto il tempo dedicato al lavoro o ad altre attività</td><td class="input-col"><input type="number" id="q4a" data-index="12" class="score-input" min="1" max="2" step="1"></td>
+                <td class="scale-info">1-2 <ul><li>1: Sì</li><li>2: No</li></ul></td></tr>
+            <tr><td>Q4b (RP2)</td><td>Ha reso meno di quanto avrebbe voluto</td><td class="input-col"><input type="number" id="q4b" data-index="13" class="score-input" min="1" max="2" step="1"></td>
+                <td class="scale-info">1-2 <ul><li>1: Sì</li><li>2: No</li></ul></td></tr>
+            <tr><td>Q4c (RP3)</td><td>Ha dovuto limitare alcuni tipi di lavoro o di altre attività</td><td class="input-col"><input type="number" id="q4c" data-index="14" class="score-input" min="1" max="2" step="1"></td>
+                <td class="scale-info">1-2 <ul><li>1: Sì</li><li>2: No</li></ul></td></tr>
+            <tr><td>Q4d (RP4)</td><td>Ha avuto difficoltà nell'eseguire il lavoro o altre attività (ad esempio, ha fatto più fatica)</td><td class="input-col"><input type="number" id="q4d" data-index="15" class="score-input" min="1" max="2" step="1"></td>
+                <td class="scale-info">1-2 <ul><li>1: Sì</li><li>2: No</li></ul></td></tr>
+            <tr><td colspan="4" class="subheader"><b>5. Nelle ultime 4 settimane, ha riscontrato i seguenti problemi sul lavoro o nelle altre attività, a causa del Suo stato emotivo (quale il sentirsi depresso o ansioso)?</b></td></tr>
+            <tr><td>Q5a (RE1)</td><td>Ha ridotto il tempo dedicato al lavoro o ad altre attività</td><td class="input-col"><input type="number" id="q5a" data-index="16" class="score-input" min="1" max="2" step="1"></td>
+                <td class="scale-info">1-2 <ul><li>1: Sì</li><li>2: No</li></ul></td></tr>
+            <tr><td>Q5b (RE2)</td><td>Ha reso meno di quanto avrebbe voluto</td><td class="input-col"><input type="number" id="q5b" data-index="17" class="score-input" min="1" max="2" step="1"></td>
+                <td class="scale-info">1-2 <ul><li>1: Sì</li><li>2: No</li></ul></td></tr>
+            <tr><td>Q5c (RE3)</td><td>Ha avuto un calo di concentrazione sul lavoro o in altre attività</td><td class="input-col"><input type="number" id="q5c" data-index="18" class="score-input" min="1" max="2" step="1"></td>
+                <td class="scale-info">1-2 <ul><li>1: Sì</li><li>2: No</li></ul></td></tr>
+            <tr><td colspan="4" class="subheader"><b>Altre Domande (ultime 4 settimane)</b></td></tr>
+            <tr><td>Q6 (SF1)</td><td class="question-text">Nelle ultime 4 settimane, in che misura la Sua salute fisica o il Suo stato emotivo hanno interferito con le normali attività sociali con la famiglia, gli amici, i vicini di casa, i gruppi di cui fa parte?</td><td class="input-col"><input type="number" id="q6" data-index="19" class="score-input" min="1" max="5" step="1"></td>
+                <td class="scale-info">1-5 <ul><li>1: Per nulla</li><li>2: Leggermente</li><li>3: Un po'</li><li>4: Molto</li><li>5: Moltissimo</li></ul></td></tr>
+            <tr><td>Q7 (BP1)</td><td class="question-text">Quanto dolore fisico ha provato nelle ultime 4 settimane?</td><td class="input-col"><input type="number" id="q7" data-index="20" class="score-input" min="1" max="6" step="1"></td>
+                <td class="scale-info">1-6 <ul><li>1: Nessuno</li><li>2: Molto lieve</li><li>3: Lieve</li><li>4: Moderato</li><li>5: Forte</li><li>6: Molto forte</li></ul></td></tr>
+            <tr><td>Q8 (BP2)</td><td class="question-text">Nelle ultime 4 settimane, in che misura il dolore L'ha ostacolata nel lavoro che svolge abitualmente (sia in casa sia fuori casa)?</td><td class="input-col"><input type="number" id="q8" data-index="21" class="score-input" min="1" max="5" step="1"></td>
+                <td class="scale-info">1-5 <ul><li>1: Per nulla</li><li>2: Molto poco</li><li>3: Un po'</li><li>4: Molto</li><li>5: Moltissimo</li></ul></td></tr>
+            <tr><td colspan="4" class="subheader"><b>9. Per quanto tempo nelle ultime 4 settimane si è sentito...</b></td></tr>
+            <tr><td>Q9a (VT1)</td><td>Vivace e brillante?</td><td class="input-col"><input type="number" id="q9a" data-index="22" class="score-input" min="1" max="6" step="1"></td>
+                <td class="scale-info">1-6 <ul><li>1: Sempre</li><li>2: Quasi sempre</li><li>3: Molto tempo</li><li>4: Una parte del tempo</li><li>5: Quasi mai</li><li>6: Mai</li></ul></td></tr>
+            <tr><td>Q9b (MH1)</td><td>Molto agitato?</td><td class="input-col"><input type="number" id="q9b" data-index="23" class="score-input" min="1" max="6" step="1"></td>
+                <td class="scale-info">1-6 <ul><li>1: Sempre</li><li>2: Quasi sempre</li><li>3: Molto tempo</li><li>4: Una parte del tempo</li><li>5: Quasi mai</li><li>6: Mai</li></ul></td></tr>
+            <tr><td>Q9c (MH2)</td><td>Così giù di morale che niente avrebbe potuto tirarLa su?</td><td class="input-col"><input type="number" id="q9c" data-index="24" class="score-input" min="1" max="6" step="1"></td>
+                <td class="scale-info">1-6 <ul><li>1: Sempre</li><li>2: Quasi sempre</li><li>3: Molto tempo</li><li>4: Una parte del tempo</li><li>5: Quasi mai</li><li>6: Mai</li></ul></td></tr>
+            <tr><td>Q9d (MH3)</td><td>Calmo e sereno?</td><td class="input-col"><input type="number" id="q9d" data-index="25" class="score-input" min="1" max="6" step="1"></td>
+                <td class="scale-info">1-6 <ul><li>1: Sempre</li><li>2: Quasi sempre</li><li>3: Molto tempo</li><li>4: Una parte del tempo</li><li>5: Quasi mai</li><li>6: Mai</li></ul></td></tr>
+            <tr><td>Q9e (VT2)</td><td>Pieno di energia?</td><td class="input-col"><input type="number" id="q9e" data-index="26" class="score-input" min="1" max="6" step="1"></td>
+                <td class="scale-info">1-6 <ul><li>1: Sempre</li><li>2: Quasi sempre</li><li>3: Molto tempo</li><li>4: Una parte del tempo</li><li>5: Quasi mai</li><li>6: Mai</li></ul></td></tr>
+            <tr><td>Q9f (MH4)</td><td>Scoraggiato e triste?</td><td class="input-col"><input type="number" id="q9f" data-index="27" class="score-input" min="1" max="6" step="1"></td>
+                <td class="scale-info">1-6 <ul><li>1: Sempre</li><li>2: Quasi sempre</li><li>3: Molto tempo</li><li>4: Una parte del tempo</li><li>5: Quasi mai</li><li>6: Mai</li></ul></td></tr>
+            <tr><td>Q9g (VT3)</td><td>Sfinito?</td><td class="input-col"><input type="number" id="q9g" data-index="28" class="score-input" min="1" max="6" step="1"></td>
+                <td class="scale-info">1-6 <ul><li>1: Sempre</li><li>2: Quasi sempre</li><li>3: Molto tempo</li><li>4: Una parte del tempo</li><li>5: Quasi mai</li><li>6: Mai</li></ul></td></tr>
+             <tr><td>Q9h (MH5)</td><td>Felice?</td><td class="input-col"><input type="number" id="q9h" data-index="29" class="score-input" min="1" max="6" step="1"></td>
+                <td class="scale-info">1-6 <ul><li>1: Sempre</li><li>2: Quasi sempre</li><li>3: Molto tempo</li><li>4: Una parte del tempo</li><li>5: Quasi mai</li><li>6: Mai</li></ul></td></tr>
+             <tr><td>Q9i (VT4)</td><td>Stanco?</td><td class="input-col"><input type="number" id="q9i" data-index="30" class="score-input" min="1" max="6" step="1"></td>
+                <td class="scale-info">1-6 <ul><li>1: Sempre</li><li>2: Quasi sempre</li><li>3: Molto tempo</li><li>4: Una parte del tempo</li><li>5: Quasi mai</li><li>6: Mai</li></ul></td></tr>
+            <tr><td colspan="4" class="subheader"><b>Altre Domande (ultime 4 settimane / affermazioni)</b></td></tr>
+             <tr><td>Q10 (SF2)</td><td class="question-text">Nelle ultime 4 settimane, per quanto tempo la Sua salute fisica o il Suo stato emotivo hanno interferito nelle Sue attività sociali, in famiglia, con gli amici?</td><td class="input-col"><input type="number" id="q10" data-index="31" class="score-input" min="1" max="5" step="1"></td>
+                <td class="scale-info">1-5 <ul><li>1: Sempre</li><li>2: Quasi sempre</li><li>3: Una parte del tempo</li><li>4: Quasi mai</li><li>5: Mai</li></ul></td></tr>
+             <tr><td colspan="4" class="subheader"><b>11. Scelga la risposta che meglio descrive quanto siano VERE o FALSE le seguenti affermazioni</b></td></tr>
+             <tr><td>Q11a (GH2)</td><td>Mi pare di ammalarmi un po' più facilmente degli altri</td><td class="input-col"><input type="number" id="q11a" data-index="32" class="score-input" min="1" max="5" step="1"></td>
+                <td class="scale-info">1-5 <ul><li>1: Certamente vero</li><li>2: In gran parte vero</li><li>3: Non so</li><li>4: In gran parte falso</li><li>5: Certamente falso</li></ul></td></tr>
+             <tr><td>Q11b (GH3)</td><td>La mia salute è come quella degli altri</td><td class="input-col"><input type="number" id="q11b" data-index="33" class="score-input" min="1" max="5" step="1"></td>
+                <td class="scale-info">1-5 <ul><li>1: Certamente vero</li><li>2: In gran parte vero</li><li>3: Non so</li><li>4: In gran parte falso</li><li>5: Certamente falso</li></ul></td></tr>
+             <tr><td>Q11c (GH4)</td><td>Mi aspetto che la mia salute andrà peggiorando</td><td class="input-col"><input type="number" id="q11c" data-index="34" class="score-input" min="1" max="5" step="1"></td>
+                <td class="scale-info">1-5 <ul><li>1: Certamente vero</li><li>2: In gran parte vero</li><li>3: Non so</li><li>4: In gran parte falso</li><li>5: Certamente falso</li></ul></td></tr>
+            <tr><td>Q11d (GH5)</td><td>Godo di ottima salute</td><td class="input-col"><input type="number" id="q11d" data-index="35" class="score-input" min="1" max="5" step="1"></td>
+                <td class="scale-info">1-5 <ul><li>1: Certamente vero</li><li>2: In gran parte vero</li><li>3: Non so</li><li>4: In gran parte falso</li><li>5: Certamente falso</li></ul></td></tr>
         </tbody>
     </table>
 </form>
@@ -316,54 +355,66 @@
         }
 
         // Funzione interna per calcolo scale 0-100 (Logica SPSS/SAS con imputazione media)
-        function calculateScaleScore(scaleName, itemIndices, minValidItems, transformation) {
-             let validRawValues = [];
+        // CORRETTA: Esegue recoding *prima* di calcolare la media per l'imputazione
+         function calculateScaleScore(scaleName, itemIndices, minValidItems, transformation) {
+             let validRecodedValues = [];
              let missingCount = 0;
+             let validItemCount = 0;
+
              itemIndices.forEach(index => {
                  const rawValue = rawScores[index];
                  if (rawValue !== null) {
-                     validRawValues.push(rawValue);
+                    validItemCount++;
+                    let recodedValue = rawValue; // Default a raw value se non c'è recoding
+                    // Applica recoding SE specificato per l'item corrente
+                    if (transformation.recode && transformation.recode[index]) {
+                         const recodeMap = transformation.recode[index];
+                         if (recodeMap[rawValue] !== undefined) {
+                             recodedValue = recodeMap[rawValue];
+                         } // Altrimenti, lascia recodedValue come rawValue (potrebbe succedere se mappa incompleta?)
+                     }
+                    validRecodedValues.push(recodedValue);
                  } else {
                      missingCount++;
                  }
              });
 
-             const validCount = validRawValues.length;
-             // Check if enough valid items are present (>= 50% usually, handled by minValidItems)
-             if (validCount < minValidItems) {
-                 return null; // Not enough data to calculate score
+             // Verifica se ci sono abbastanza item validi
+             if (validItemCount < minValidItems) {
+                 return null; // Non abbastanza dati per calcolare il punteggio
              }
 
-             // Calculate mean of valid items for imputation
-             const rawMean = validCount > 0 ? validRawValues.reduce((a, b) => a + b, 0) / validCount : 0;
+             // Calcola la media dei *valori ricodificati* validi per l'imputazione
+             const recodedMean = validRecodedValues.length > 0
+                               ? validRecodedValues.reduce((a, b) => a + b, 0) / validRecodedValues.length
+                               : 0; // Default a 0 se non ci sono valori validi (non dovrebbe succedere con check minValidItems)
 
-             let processedValuesSum = 0;
+             let finalSum = 0;
              itemIndices.forEach(index => {
-                 let valueToProcess = rawScores[index];
-                 if (valueToProcess === null) {
-                     // Impute missing value with the mean of non-missing items in the scale
-                     valueToProcess = rawMean;
-                 }
-
-                 // Apply recoding if specified in the transformation object
-                 if (transformation.recode && transformation.recode[index]) {
-                     const recodeMap = transformation.recode[index];
-                     // Important: Use the original value for recoding lookup, even if imputed
-                     const originalValueForRecode = rawScores[index] !== null ? rawScores[index] : rawMean;
-                     // Apply recoding map; if value not in map, use the value itself (might need adjustment based on exact recode logic)
-                     processedValuesSum += (recodeMap[originalValueForRecode] !== undefined ? recodeMap[originalValueForRecode] : valueToProcess);
+                 const rawValue = rawScores[index];
+                 if (rawValue !== null) {
+                     let recodedValue = rawValue;
+                     if (transformation.recode && transformation.recode[index]) {
+                         const recodeMap = transformation.recode[index];
+                          if (recodeMap[rawValue] !== undefined) {
+                              recodedValue = recodeMap[rawValue];
+                          }
+                     }
+                     finalSum += recodedValue;
                  } else {
-                     processedValuesSum += valueToProcess;
+                     // Imputa il valore mancante con la media dei valori ricodificati
+                     finalSum += recodedMean;
                  }
              });
 
-             // Final transformation to 0-100 scale
-             const score = ((processedValuesSum - transformation.minSum) / transformation.range) * 100;
-             // Clamp score between 0 and 100
+             // Trasformazione finale nella scala 0-100
+             const score = ((finalSum - transformation.minSum) / transformation.range) * 100;
+             // Limita il punteggio tra 0 e 100
              return Math.max(0, Math.min(100, score));
          }
 
-         // IMPLEMENTED: Funzione specifica per calcolo BP (Dolore Fisico)
+
+         // IMPLEMENTED: Funzione specifica per calcolo BP (Dolore Fisico) - Usa logica standard
          function calculateBPScore() {
             const itemIndices = scaleItemIndices['BP']; // [20, 21]
             const minValidItems = 1; // Need at least one item for BP
@@ -377,55 +428,70 @@
 
             if (validRawValues.length < minValidItems) return null;
 
-            // Recoding maps (based on standard SAS/SPSS syntax logic)
-            const bp1Recode = { 1: 6, 2: 5.5, 3: 4.2, 4: 3.1, 5: 2.2, 6: 1 }; // Q7 (index 20)
-            const bp2Recode = { 1: 1, 2: 2.25, 3: 3.5, 4: 4.75, 5: 6 }; // Q8 (index 21)
+            // Recoding maps (standard - higher value = better health)
+            const bp1Recode = { 1: 6, 2: 5.5, 3: 4.2, 4: 3.1, 5: 2.2, 6: 1 }; // Q7: 1=Nessuno(6) ... 6=Molto forte(1)
+            const bp2Recode = { 1: 6, 2: 4.75, 3: 3.5, 4: 2.25, 5: 1 };       // Q8: 1=Per nulla(6) ... 5=Moltissimo(1) (Scala invertita e interpolata)
 
+            let validRecodedValues = [];
             let recodedVal20 = rawValue20 !== null ? bp1Recode[rawValue20] : null;
             let recodedVal21 = rawValue21 !== null ? bp2Recode[rawValue21] : null;
 
-            let sumRecoded = 0;
-            let countRecoded = 0;
-            if (recodedVal20 !== null) { sumRecoded += recodedVal20; countRecoded++; }
-            if (recodedVal21 !== null) { sumRecoded += recodedVal21; countRecoded++; }
+            if(recodedVal20 !== null) validRecodedValues.push(recodedVal20);
+            if(recodedVal21 !== null) validRecodedValues.push(recodedVal21);
 
-            // If one is missing, impute with the valid one's recoded value (effectively doubling it for the average)
-            if (countRecoded === 1 && validRawValues.length === 1) {
-                 if (recodedVal20 !== null) sumRecoded += recodedVal20;
-                 if (recodedVal21 !== null) sumRecoded += recodedVal21;
-            } else if (countRecoded === 0) { // Should not happen if minValidItems = 1
-                return null;
-            }
+            // Calculate mean of valid recoded items
+            const recodedMean = validRecodedValues.length > 0
+                              ? validRecodedValues.reduce((a, b) => a + b, 0) / validRecodedValues.length
+                              : 0;
 
-            // Average of recoded values (or imputed average)
-            const avgRecoded = sumRecoded / 2; // Always divide by 2 items
+            let finalSum = 0;
+            if (recodedVal20 !== null) finalSum += recodedVal20; else finalSum += recodedMean;
+            if (recodedVal21 !== null) finalSum += recodedVal21; else finalSum += recodedMean;
 
-            // Transform to 0-100 scale: (((AvgRecoded - MinPossibleAvg) / RangeOfAvg) * 100)
-            const minPossibleAvg = 1; // (Recoded Q7=1 + Recoded Q8=1)/2 = 1
-            const maxPossibleAvg = 6; // (Recoded Q7=6 + Recoded Q8=6)/2 = 6
-            const rangeOfAvg = maxPossibleAvg - minPossibleAvg; // 5
 
-            const score = ((avgRecoded - minPossibleAvg) / rangeOfAvg) * 100;
+            // Transform to 0-100 scale: (((Sum - MinPossibleSum) / RangeOfSum) * 100)
+            const minPossibleRecodedValue = 1; // Worst score on recoded scale is 1
+            const maxPossibleRecodedValue = 6; // Best score on recoded scale is 6
+            const minSum = itemIndices.length * minPossibleRecodedValue; // 2 * 1 = 2
+            const range = itemIndices.length * (maxPossibleRecodedValue - minPossibleRecodedValue); // 2 * (6 - 1) = 10
+
+            const score = ((finalSum - minSum) / range) * 100;
             return Math.max(0, Math.min(100, score));
          }
 
-        // 2. Calcolo Punteggi Scale 0-100 (Logica SPSS/SAS)
-        // Min valid items = N/2 rounded up generally
-        results.scores['PF'] = calculateScaleScore('PF', scaleItemIndices['PF'], 5, { minSum: 10, range: 20 });
-        results.scores['RP'] = calculateScaleScore('RP', scaleItemIndices['RP'], 2, { minSum: 4, range: 4, recode: { 12: {1:1, 2:2}, 13: {1:1, 2:2}, 14: {1:1, 2:2}, 15: {1:1, 2:2} }}); // Note: Recode for RP/RE ensures 1=worst, 2=best -> standard transformation uses raw 1/2
-        results.scores['RE'] = calculateScaleScore('RE', scaleItemIndices['RE'], 2, { minSum: 3, range: 3, recode: { 16: {1:1, 2:2}, 17: {1:1, 2:2}, 18: {1:1, 2:2} }});
-        const vtRecodeMap = { 1: 6, 2: 5, 3: 4, 4: 3, 5: 2, 6: 1 }; // Invert scale
-        results.scores['VT'] = calculateScaleScore('VT', scaleItemIndices['VT'], 2, { minSum: 4, range: 20, recode: { 22: vtRecodeMap, 28: vtRecodeMap, 30: vtRecodeMap, 26: {1:1, 2:2, 3:3, 4:4, 5:5, 6:6} } }); // Q9e(26) is positive
-        const mhRecodeMap = { 1: 6, 2: 5, 3: 4, 4: 3, 5: 2, 6: 1 }; // Invert scale
-        results.scores['MH'] = calculateScaleScore('MH', scaleItemIndices['MH'], 3, { minSum: 5, range: 25, recode: { 23: mhRecodeMap, 24: mhRecodeMap, 27: mhRecodeMap, 25: {1:1, 2:2, 3:3, 4:4, 5:5, 6:6}, 29: {1:1, 2:2, 3:3, 4:4, 5:5, 6:6} } }); // Q9d(25), Q9h(29) are positive
-        const sfRecodeMap = { 1: 5, 2: 4, 3: 3, 4: 2, 5: 1 }; // Invert scale
-        results.scores['SF'] = calculateScaleScore('SF', scaleItemIndices['SF'], 1, { minSum: 2, range: 8, recode: { 19: sfRecodeMap, 31: {1:1, 2:2, 3:3, 4:4, 5:5} } }); // Q10(31) uses direct scale
+        // 2. Calcolo Punteggi Scale 0-100 (Logica SPSS/SAS) - Recoding corretto
+        results.scores['PF'] = calculateScaleScore('PF', scaleItemIndices['PF'], 5, { minSum: 10, range: 20, recode: {} }); // No recode needed
+        results.scores['RP'] = calculateScaleScore('RP', scaleItemIndices['RP'], 2, { minSum: 4, range: 4, recode: {} }); // No recode needed
+        results.scores['RE'] = calculateScaleScore('RE', scaleItemIndices['RE'], 2, { minSum: 3, range: 3, recode: {} }); // No recode needed
+
+        const map6ptInvert = { 1: 6, 2: 5, 3: 4, 4: 3, 5: 2, 6: 1 };
+        const map6ptDirect = { 1: 1, 2: 2, 3: 3, 4: 4, 5: 5, 6: 6 };
+        results.scores['VT'] = calculateScaleScore('VT', scaleItemIndices['VT'], 2, { minSum: 4, range: 20, recode: { 22: map6ptDirect, 26: map6ptDirect, 28: map6ptInvert, 30: map6ptInvert } });
+        results.scores['MH'] = calculateScaleScore('MH', scaleItemIndices['MH'], 3, { minSum: 5, range: 25, recode: { 23: map6ptInvert, 24: map6ptInvert, 27: map6ptInvert, 25: map6ptDirect, 29: map6ptDirect } });
+
+        const map5ptInvert = { 1: 5, 2: 4, 3: 3, 4: 2, 5: 1 };
+        const map5ptDirect = { 1: 1, 2: 2, 3: 3, 4: 4, 5: 5 };
+        results.scores['SF'] = calculateScaleScore('SF', scaleItemIndices['SF'], 1, { minSum: 2, range: 8, recode: { 19: map5ptInvert, 31: map5ptInvert } }); // Q10: 1=Sempre interferito (low) -> 1; 5=Mai (high) -> 5. Needs inversion for higher=better.
 
         results.scores['BP'] = calculateBPScore(); // Use dedicated function for BP
 
-        const gh1RecodeMap = { 1: 5, 2: 4.4, 3: 3.4, 4: 2, 5: 1 }; // Specific for Q1
-        const ghStdRecodeMap = { 1: 5, 2: 4, 3: 3, 4: 2, 5: 1 }; // Invert scale for negative items
-        results.scores['GH'] = calculateScaleScore('GH', scaleItemIndices['GH'], 3, { minSum: 5, range: 20, recode: { 0: gh1RecodeMap, 32: ghStdRecodeMap, 34: ghStdRecodeMap, 33: {1:1, 2:2, 3:3, 4:4, 5:5}, 35: {1:1, 2:2, 3:3, 4:4, 5:5} } }); // Q11b(33), Q11d(35) are positive
+        const gh1RecodeMap = { 1: 5, 2: 4.4, 3: 3.4, 4: 2, 5: 1 }; // Specific for Q1 (1=Exc -> 5)
+        const ghTFRecodeMapInvert = { 1: 5, 2: 4, 3: 3, 4: 2, 5: 1 }; // Invert True/False (1=CV -> 5)
+        const ghTFRecodeMapDirect = { 1: 1, 2: 2, 3: 3, 4: 4, 5: 5 }; // Direct True/False (1=CV -> 1)
+        // Higher value = better health.
+        // Q11a (Ammalarmi): False(5) is better -> Invert needed -> ghTFRecodeMapInvert
+        // Q11b (Salute come altri): True(1) is better -> Direct needed -> ghTFRecodeMapDirect (This item is debated, often dropped, but we follow syntax) -> WAIT, standard recode is {1=5, 2=4, 3=3, 4=2, 5=1}
+        // Q11c (Peggiorando): False(5) is better -> Invert needed -> ghTFRecodeMapInvert
+        // Q11d (Ottima salute): True(1) is better -> Direct needed -> ghTFRecodeMapDirect -> WAIT, standard recode is {1=5, 2=4, 3=3, 4=2, 5=1}
+        results.scores['GH'] = calculateScaleScore('GH', scaleItemIndices['GH'], 3, { minSum: 5, range: 20, recode: {
+            0: gh1RecodeMap,               // Q1: Exc(1)->5
+            32: ghTFRecodeMapInvert,       // Q11a: Ammalarmi CV(1)->1 (Needs Invert -> 5)
+            33: ghTFRecodeMapInvert,       // Q11b: Come altri CV(1)->5 (Needs Invert -> 1) --- Let's use standard {1=5...5=1}
+            34: ghTFRecodeMapInvert,       // Q11c: Peggiorando CV(1)->1 (Needs Invert -> 5)
+            35: ghTFRecodeMapInvert        // Q11d: Ottima salute CV(1)->5 (Needs Invert -> 1) --- Let's use standard {1=5...5=1}
+            }
+        });
+
         const htRaw = rawScores[1]; results.scores['HT'] = (htRaw !== null && htRaw >= 1 && htRaw <= 5) ? ({ 1: 100, 2: 75, 3: 50, 4: 25, 5: 0 })[htRaw] : null;
 
 
@@ -521,9 +587,12 @@
         const value = context.parsed.y;
         const originalScore = context.dataset.originalScores ? context.dataset.originalScores[context.dataIndex] : null;
 
-        if (originalScore !== null && originalScore !== 'N/D' && !isNaN(originalScore)) {
+        if (originalScore !== null && originalScore !== 'N/D' && originalScore !== 'N/A' && !isNaN(originalScore)) {
             label += originalScore.toFixed(1); // Mostra il valore numerico con 1 decimale
-        } else {
+        } else if (originalScore === 'N/A') {
+             label += 'N/A';
+        }
+         else {
             label += 'N/D'; // Mostra N/D se il dato originale non è valido
         }
         return label;
@@ -692,17 +761,28 @@
         if (!chartInstance || !dataObject) return;
         const dataset = chartInstance.data.datasets[0];
         dataset.scaleKeys.forEach((key, index) => {
-            const value = dataObject[key];
-            if (value !== null && value !== undefined && !isNaN(value)) {
-                dataset.data[index] = value;
-                dataset.originalScores[index] = value; // Store the valid numeric score
-            } else {
-                dataset.data[index] = 0; // Represent N/D as 0 on the chart visually
-                dataset.originalScores[index] = 'N/D'; // Keep track that it was N/D
+            // Ensure the index is within the bounds of the data arrays
+            if (index < dataset.data.length && index < dataset.originalScores.length) {
+                const value = dataObject[key];
+                if (value !== null && value !== undefined && !isNaN(value)) {
+                    dataset.data[index] = value;
+                    dataset.originalScores[index] = value; // Store the valid numeric score
+                } else {
+                    // Check if key exists in dataObject before setting N/D
+                    if (dataObject.hasOwnProperty(key)){
+                        dataset.data[index] = 0; // Represent N/D as 0 on the chart visually
+                        dataset.originalScores[index] = 'N/D'; // Keep track that it was N/D
+                    } else {
+                         // If key doesn't exist (e.g. HT in Z-score chart), handle appropriately
+                         dataset.data[index] = 0; // Or null, depending on chart type
+                         dataset.originalScores[index] = 'N/A'; // Or some other indicator
+                    }
+                }
             }
         });
         chartInstance.update();
     }
+
 
     // --- Funzione Principale & Aggiornamento UI ---
     function updateScoresAndChart() {

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Calcolatore Punteggio SF-36 (Standardizzazione Età/Sesso)</title>
+    <title>Calcolatore Punteggio SF-36. Codice elaborato partendo dal sito dell'Istituto Mario Negri)</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@^4"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@^3"></script>
 
@@ -18,9 +18,9 @@
         .input-col { width: 100px; text-align: center;}
         .input-col-small { width: 120px; text-align: center; }
         input[type="number"], select {
-             width: 90%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;
-             box-sizing: border-box;
-             text-align: center;
+            width: 90%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;
+            box-sizing: border-box;
+            text-align: center;
         }
         input:invalid, select:invalid { border-color: red; }
         .invalid-input { border-color: red !important; background-color: #fff7f7; }
@@ -32,15 +32,15 @@
             min-width: 80px;
         }
         .score-display, .zscore-display, .summary-display, .agesex-tscore-display {
-             display: inline-block; text-align: right; padding: 5px; background-color: #f0f0f0; border-radius: 3px; font-family: monospace;
-             min-width: 70px;
+            display: inline-block; text-align: right; padding: 5px; background-color: #f0f0f0; border-radius: 3px; font-family: monospace;
+            min-width: 70px;
         }
         .na-score { color: #888; }
         .notes { font-size: 0.9em; color: #666; margin-top: 15px; }
         .warning { color: #c0392b; font-weight: bold;}
         .chart-container {
-             position: relative; height: 40vh; width: 95%; max-width: 900px;
-             margin-left: auto; margin-right: auto; margin-bottom: 30px;
+            position: relative; height: 40vh; width: 95%; max-width: 900px;
+            margin-left: auto; margin-right: auto; margin-bottom: 30px;
         }
         .chart-container-small { max-width: 500px; height: 35vh; }
         input.invalid-input { border-color: red; background-color: #ffecec; }
@@ -51,10 +51,10 @@
 </head>
 <body>
 
-<h1>Calcolatore Punteggio SF-36 (Standardizzazione Età/Sesso)</h1>
-<p>Inserisci i valori per ciascuna domanda, l'età e il sesso. Verranno calcolati: Punteggi scale 0-100, Z-scores (vs Pop. USA), Indici Sintetici ISF/ISM (T-score USA), e Punteggi T standardizzati per Età e Sesso (vs Pop. Italiana).</p>
+<h1>Calcolatore Punteggio SF-36</h1>
+<p>Inserisci i valori per ciascuna domanda, l'età e il sesso. Verranno calcolati: Punteggi scale 0-100, Z-scores (vs Pop. USA), Indici Sintetici ISF/ISM (T-score USA), e Punteggi T standardizzati per Età e Sesso (vs Pop. Italiana, basati su punteggi 0-100 calcolati).</p>
 <p class="notes warning">Se Età o Sesso non vengono inseriti, i punteggi standardizzati per età/sesso e il relativo grafico non saranno calcolati.</p>
-<p class="notes" style="color:purple; font-weight:bold;">Ver6 - Scoring Corretto</p>
+<p class="notes" style="color:purple; font-weight:bold;">Ver8 - Scoring 0-100 allineato a logica Mario Negri, grafici Z-score e T-score ITA rimossi</p>
 
 <form id="sf36-form" onsubmit="return false;">
     <h3>Dati Demografici</h3>
@@ -229,7 +229,7 @@
          </table>
      </div>
 
-     <p class="notes"><i>Nota: Il calcolo delle scale 0-100 segue la logica SPSS/SAS (imputazione media <50% missing, formule trasformazione). La standardizzazione USA (Z-score, ISF, ISM) usa norme generali USA. La standardizzazione Età/Sesso usa norme specifiche italiane (come da codice fornito).</i></p>
+     <p class="notes"><i>Nota: Il calcolo delle scale 0-100 segue la logica dell'Istituto Mario Negri (come da script di riferimento). La standardizzazione USA (Z-score, ISF, ISM) usa norme generali USA. La standardizzazione Età/Sesso usa norme specifiche italiane (come da codice fornito).</i></p>
 </div>
 
 <h3>Grafici Riepilogativi</h3>
@@ -244,35 +244,20 @@
     <canvas id="summaryChart"></canvas>
 </div>
 
-<div class="chart-container">
-    <h2>Grafico Punteggi Z Standardizzati (vs Pop. USA)</h2>
-    <canvas id="zScoreChart"></canvas>
-</div>
-
-<div id="age-sex-chart-section" class="chart-container hidden-section"> <h2>Grafico Punteggi T Standardizzati per Età e Sesso (vs Pop. ITA)</h2>
-    <canvas id="ageSexTScoreChart"></canvas>
-</div>
-
-
 <script>
     // --- Variabili Globali Grafici ---
     let scoresChartInstance = null;
     let summaryChartInstance = null;
-    let zScoreChartInstance = null;
-    let ageSexTScoreChartInstance = null;
+    // let zScoreChartInstance = null; // RIMOSSO
+    // let ageSexTScoreChartInstance = null; // RIMOSSO
     let allAnswers = new Array(36).fill(null);
     let demographicData = { age: null, sex: null, ageClass: 0, canCalculateAgeSex: false };
 
-    // --- Mappatura Indici -> Scale ---
-    const scaleItemIndices = { 'PF': [2, 3, 4, 5, 6, 7, 8, 9, 10, 11], 'RP': [12, 13, 14, 15], 'BP': [20, 21], 'GH': [0, 32, 33, 34, 35], 'VT': [22, 26, 28, 30], 'SF': [19, 31], 'RE': [16, 17, 18], 'MH': [23, 24, 25, 27, 29], 'HT': [1] };
-    // --- Range Validi Item ---
     const itemValidRanges = { 0: {min: 1, max: 5},  1: {min: 1, max: 5},  2: {min: 1, max: 3},  3: {min: 1, max: 3},  4: {min: 1, max: 3}, 5: {min: 1, max: 3},  6: {min: 1, max: 3},  7: {min: 1, max: 3},  8: {min: 1, max: 3},  9: {min: 1, max: 3}, 10: {min: 1, max: 3}, 11: {min: 1, max: 3}, 12: {min: 1, max: 2}, 13: {min: 1, max: 2}, 14: {min: 1, max: 2}, 15: {min: 1, max: 2}, 16: {min: 1, max: 2}, 17: {min: 1, max: 2}, 18: {min: 1, max: 2}, 19: {min: 1, max: 5}, 20: {min: 1, max: 6}, 21: {min: 1, max: 5}, 22: {min: 1, max: 6}, 23: {min: 1, max: 6}, 24: {min: 1, max: 6}, 25: {min: 1, max: 6}, 26: {min: 1, max: 6}, 27: {min: 1, max: 6}, 28: {min: 1, max: 6}, 29: {min: 1, max: 6}, 30: {min: 1, max: 6}, 31: {min: 1, max: 5}, 32: {min: 1, max: 5}, 33: {min: 1, max: 5}, 34: {min: 1, max: 5}, 35: {min: 1, max: 5} };
-    // --- Costanti Standardizzazione USA ---
     const usMeans = { PF: 84.52404, RP: 81.19907, BP: 75.49196, GH: 72.21316, VT: 61.05453, SF: 83.59753, RE: 81.29467, MH: 74.84212 };
     const usSDs   = { PF: 22.89490, RP: 33.79729, BP: 23.55879, GH: 20.16964, VT: 20.86942, SF: 22.37642, RE: 33.02717, MH: 18.01189 };
     const weights = { PCS: { PF:  0.42402, RP:  0.35119, BP:  0.31754, GH:  0.24954, VT:  0.02877, SF: -0.00753, RE: -0.19206, MH: -0.22069 }, MCS: { PF: -0.22999, RP: -0.12329, BP: -0.09731, GH: -0.01571, VT:  0.23534, SF:  0.26876, RE:  0.43407, MH:  0.48581 } };
 
-    // --- NUOVA Struttura Dati: Norme Italiane per Età/Sesso ---
     const ageSexNorms = {
         1: { // Sesso = 1 (Maschio)
             2: { PF: { mean: 96.4851, sd: 7.9544 }, RP: { mean: 91.0891, sd: 19.8696 }, BP: { mean: 90.9505, sd: 14.0124 }, GH: { mean: 81.2079, sd: 13.1972 }, VT: { mean: 73.1683, sd: 15.3252 }, SF: { mean: 85.5198, sd: 17.9176 }, RE: { mean: 84.8185, sd: 28.8770 }, MH: { mean: 76.1980, sd: 12.7421 } },
@@ -294,28 +279,24 @@
         }
     };
 
+    function N() {	var num=0;	if (N.arguments.length==1 && Array.isArray(N.arguments[0])) { var arr=N.arguments[0];		for (var i=0;i<arr.length;i++) if (arr[i] !== null && !isNaN(arr[i])) num++;	} else { for (var i=0;i<N.arguments.length;i++)	if (N.arguments[i] !== null && !isNaN(N.arguments[i])) num++;	}	return(num);}
+    function SUM() { var sum=0;	if (SUM.arguments.length==1 && Array.isArray(SUM.arguments[0])) { var arr=SUM.arguments[0]; for (var i=0;i<arr.length;i++) if (arr[i] !== null && !isNaN(arr[i])) sum+=arr[i];	} else { for (var i=0;i<SUM.arguments.length;i++) if (SUM.arguments[i] !== null && !isNaN(SUM.arguments[i])) sum+=SUM.arguments[i];	}	return(sum);}
+    function MEAN() { var num=0; var sum=0; if (MEAN.arguments.length==1 && Array.isArray(MEAN.arguments[0])) { var arr=MEAN.arguments[0];	for (var i=0;i<arr.length;i++) if (arr[i] !== null && !isNaN(arr[i])) { num++; sum+=arr[i];	}	} else { for (var i=0;i<MEAN.arguments.length;i++) if (MEAN.arguments[i] !== null && !isNaN(MEAN.arguments[i])) { num++; sum+=MEAN.arguments[i];	}	} return(num === 0 ? NaN : sum/num); }
 
-    // --- IMPLEMENTED Helper Function: Ottieni e valida valore grezzo ---
+
     function getRawValue(inputElement) {
         if (!inputElement) return { value: null, valid: false };
-
         const valueStr = inputElement.value;
         let valueNum = null;
         let isValid = false;
-
-        // Reset validation style
         inputElement.classList.remove('invalid-input');
 
         if (valueStr !== null && valueStr.trim() !== '') {
-            valueNum = parseInt(valueStr, 10); // Use parseInt for integer values
-
+            valueNum = parseInt(valueStr, 10);
             if (!isNaN(valueNum)) {
-                 // Check against min/max attributes first
                 const min = inputElement.min ? parseInt(inputElement.min, 10) : null;
                 const max = inputElement.max ? parseInt(inputElement.max, 10) : null;
-
                 if ((min === null || valueNum >= min) && (max === null || valueNum <= max)) {
-                    // Additionally check against specific itemValidRanges if it's a score input
                     const index = inputElement.dataset.index;
                     if (index !== undefined && itemValidRanges[index]) {
                         const range = itemValidRanges[index];
@@ -323,215 +304,220 @@
                             isValid = true;
                         }
                     } else {
-                         // If not a score input (e.g., age), min/max attributes are sufficient
                          isValid = true;
                     }
                 }
             }
         }
-
         if (!isValid && valueStr !== null && valueStr.trim() !== '') {
              inputElement.classList.add('invalid-input');
         } else if (valueStr === null || valueStr.trim() === '') {
-            // Empty is considered invalid for calculation but don't style it red
-            valueNum = null;
+            valueNum = NaN;
             isValid = false;
         }
-
-        // Return the numeric value (or null) and validity
-        return { value: isValid ? valueNum : null, valid: isValid };
+        return { value: (valueStr !== null && valueStr.trim() !== '' && isValid) ? valueNum : NaN, valid: isValid };
     }
 
 
-    // --- Funzione di Calcolo Generale (Logica SPSS/SAS + Età/Sesso ITA) ---
-    function calculateAllSf36Scores(answers, age, sex) {
-        let rawScores = {}; // Valori grezzi validati (null se non valido)
-        // Oggetto risultati ampliato
+    function calculateAllSf36Scores(p, age, sex) {
         let results = { scores: {}, zScores: {}, summaries: {}, ageSexScores: {} };
+        let i = 0;
 
-        // 1. Validazione e Memorizzazione Valori Grezzi (using the new getRawValue)
-        for (let i = 0; i < answers.length; i++) {
-            rawScores[i] = answers[i]; // Assume answers array already contains validated values (null if invalid)
+        const getPVal = (originalKey) => {
+            const keyMap = {
+                "PF01": 2, "PF02": 3, "PF03": 4, "PF04": 5, "PF05": 6, "PF06": 7, "PF07": 8, "PF08": 9, "PF09": 10, "PF10": 11,
+                "RP1": 12, "RP2": 13, "RP3": 14, "RP4": 15,
+                "BP1": 20, "BP2": 21,
+                "GH1": 0, "GH2": 32, "GH3": 33, "GH4": 34, "GH5": 35,
+                "VT1": 22, "VT2": 26, "VT3": 28, "VT4": 30,
+                "SF1": 19, "SF2": 31,
+                "RE1": 16, "RE2": 17, "RE3": 18,
+                "MH1": 23, "MH2": 24, "MH3": 25, "MH4": 27, "MH5": 29,
+                "HT": 1
+            };
+            return p[keyMap[originalKey]];
+        };
+
+        let PFI = [
+            getPVal("PF01"), getPVal("PF02"), getPVal("PF03"), getPVal("PF04"), getPVal("PF05"),
+            getPVal("PF06"), getPVal("PF07"), getPVal("PF08"), getPVal("PF09"), getPVal("PF10")
+        ];
+        let PFNUM = N(PFI);
+        let PFMEAN = MEAN(PFI);
+        if (!isNaN(PFMEAN)) {
+           for (i = 0; i < 10; i++) if (isNaN(PFI[i])) PFI[i] = PFMEAN;
         }
+        let RAWPF = 0;
+        if (PFNUM >= 5) RAWPF = SUM(PFI); else RAWPF = NaN;
+        results.scores['PF'] = (PFNUM >= 5 && !isNaN(RAWPF)) ? ((RAWPF - 10) / (30 - 10)) * 100 : null;
+        if (results.scores['PF'] !== null) results.scores['PF'] = Math.max(0, Math.min(100, results.scores['PF']));
 
-        // Funzione interna per calcolo scale 0-100 (Logica SPSS/SAS con imputazione media)
-        // CORRETTA: Esegue recoding *prima* di calcolare la media per l'imputazione
-         function calculateScaleScore(scaleName, itemIndices, minValidItems, transformation) {
-             let validRecodedValues = [];
-             let missingCount = 0;
-             let validItemCount = 0;
+        let RPA = [getPVal("RP1"), getPVal("RP2"), getPVal("RP3"), getPVal("RP4")];
+        let ROLPNUM = N(RPA);
+        let ROLPMEAN = MEAN(RPA);
+        if(!isNaN(ROLPMEAN)) {
+            for (i = 0; i < 4; i++) if (isNaN(RPA[i])) RPA[i] = ROLPMEAN;
+        }
+        let RAWRP = 0;
+        if (ROLPNUM >= 2) RAWRP = SUM(RPA); else RAWRP = NaN;
+        results.scores['RP'] = (ROLPNUM >= 2 && !isNaN(RAWRP)) ? ((RAWRP - 4) / (8 - 4)) * 100 : null;
+        if (results.scores['RP'] !== null) results.scores['RP'] = Math.max(0, Math.min(100, results.scores['RP']));
 
-             itemIndices.forEach(index => {
-                 const rawValue = rawScores[index];
-                 if (rawValue !== null) {
-                    validItemCount++;
-                    let recodedValue = rawValue; // Default a raw value se non c'è recoding
-                    // Applica recoding SE specificato per l'item corrente
-                    if (transformation.recode && transformation.recode[index]) {
-                         const recodeMap = transformation.recode[index];
-                         if (recodeMap[rawValue] !== undefined) {
-                             recodedValue = recodeMap[rawValue];
-                         } // Altrimenti, lascia recodedValue come rawValue (potrebbe succedere se mappa incompleta?)
-                     }
-                    validRecodedValues.push(recodedValue);
-                 } else {
-                     missingCount++;
-                 }
-             });
+        let BP1_raw = getPVal("BP1");
+        let BP2_raw = getPVal("BP2");
+        let RBP1 = NaN; let RBP2 = NaN;
+        if (!isNaN(BP1_raw)) {
+            if (BP1_raw==1) RBP1=6; else if (BP1_raw==2) RBP1=5.4; else if (BP1_raw==3) RBP1=4.2; else if (BP1_raw==4) RBP1=3.1; else if (BP1_raw==5) RBP1=2.2; else if (BP1_raw==6) RBP1=1;
+        }
+        if (!isNaN(BP2_raw)) {
+            if (BP2_raw==1) RBP2=6; else if (BP2_raw==2) RBP2=4.75; else if (BP2_raw==3) RBP2=3.5; else if (BP2_raw==4) RBP2=2.25; else if (BP2_raw==5) RBP2=1;
+        }
+        if (!isNaN(BP1_raw) && !isNaN(BP2_raw)) {
+            if (BP2_raw==1 && BP1_raw==1) RBP2=6;
+            else if (BP2_raw==1 && BP1_raw>=2 && BP1_raw<=6) RBP2=5;
+            else if (BP2_raw==2 && BP1_raw>=1 && BP1_raw<=6) RBP2=4;
+            else if (BP2_raw==3 && BP1_raw>=1 && BP1_raw<=6) RBP2=3;
+            else if (BP2_raw==4 && BP1_raw>=1 && BP1_raw<=6) RBP2=2;
+            else if (BP2_raw==5 && BP1_raw>=1 && BP1_raw<=6) RBP2=1;
+        } else if (!isNaN(BP1_raw) && isNaN(BP2_raw)) {
+            RBP2 = RBP1;
+        } else if (isNaN(BP1_raw) && !isNaN(BP2_raw)) {
+            RBP1 = RBP2;
+        }
+        let BPNUM = N(BP1_raw, BP2_raw);
+        let RAWBP = NaN;
+        if (BPNUM >= 1) RAWBP = SUM(RBP1, RBP2);
+        results.scores['BP'] = (BPNUM >= 1 && !isNaN(RAWBP)) ? ((RAWBP - 2) / (12 - 2)) * 100 : null;
+        if (results.scores['BP'] !== null) results.scores['BP'] = Math.max(0, Math.min(100, results.scores['BP']));
 
-             // Verifica se ci sono abbastanza item validi
-             if (validItemCount < minValidItems) {
-                 return null; // Non abbastanza dati per calcolare il punteggio
-             }
+        let GH1_raw = getPVal("GH1"); let GH2_raw = getPVal("GH2"); let GH3_raw = getPVal("GH3"); let GH4_raw = getPVal("GH4"); let GH5_raw = getPVal("GH5");
+        let RGH_Items_For_Mean = [];
+        let RGH1_rec = NaN;
+        if (!isNaN(GH1_raw)) { if (GH1_raw==1) RGH1_rec=5; else if (GH1_raw==2) RGH1_rec=4.4; else if (GH1_raw==3) RGH1_rec=3.4; else if (GH1_raw==4) RGH1_rec=2; else if (GH1_raw==5) RGH1_rec=1; }
+        RGH_Items_For_Mean.push(RGH1_rec);
+        RGH_Items_For_Mean.push(GH2_raw);
+        let RGH3_rec = NaN; if(!isNaN(GH3_raw)) RGH3_rec = 6 - GH3_raw;
+        RGH_Items_For_Mean.push(RGH3_rec);
+        RGH_Items_For_Mean.push(GH4_raw);
+        let RGH5_rec = NaN; if(!isNaN(GH5_raw)) RGH5_rec = 6 - GH5_raw;
+        RGH_Items_For_Mean.push(RGH5_rec);
+        let GHNUM_raw = N(GH1_raw, GH2_raw, GH3_raw, GH4_raw, GH5_raw);
+        let GHMEAN = MEAN(RGH_Items_For_Mean);
+        let RGH_final = [RGH1_rec, GH2_raw, RGH3_rec, GH4_raw, RGH5_rec];
+         if (!isNaN(GHMEAN)) {
+            for (i = 0; i < 5; i++) if (isNaN(RGH_final[i])) RGH_final[i] = GHMEAN;
+        }
+        let RAWGH = NaN;
+        if (GHNUM_raw >= 3) RAWGH = SUM(RGH_final);
+        results.scores['GH'] = (GHNUM_raw >=3 && !isNaN(RAWGH)) ? ((RAWGH - 5) / (25 - 5)) * 100 : null;
+        if (results.scores['GH'] !== null) results.scores['GH'] = Math.max(0, Math.min(100, results.scores['GH']));
 
-             // Calcola la media dei *valori ricodificati* validi per l'imputazione
-             const recodedMean = validRecodedValues.length > 0
-                               ? validRecodedValues.reduce((a, b) => a + b, 0) / validRecodedValues.length
-                               : 0; // Default a 0 se non ci sono valori validi (non dovrebbe succedere con check minValidItems)
+        let VT1_raw_val = getPVal("VT1"); let VT2_raw_val = getPVal("VT2"); let VT3_raw_val = getPVal("VT3"); let VT4_raw_val = getPVal("VT4");
+        let RVI_Items_For_Mean_calc = [];
+        let RVT1_rec = NaN; if(!isNaN(VT1_raw_val)) RVT1_rec = 7 - VT1_raw_val;
+        RVI_Items_For_Mean_calc.push(RVT1_rec);
+        let RVT2_rec = NaN; if(!isNaN(VT2_raw_val)) RVT2_rec = 7 - VT2_raw_val;
+        RVI_Items_For_Mean_calc.push(RVT2_rec);
+        RVI_Items_For_Mean_calc.push(VT3_raw_val);
+        RVI_Items_For_Mean_calc.push(VT4_raw_val);
+        let VITNUM_raw_count = N(VT1_raw_val, VT2_raw_val, VT3_raw_val, VT4_raw_val);
+        let VITMEAN_val = MEAN(RVI_Items_For_Mean_calc);
+        let RVI_final = [RVT1_rec, RVT2_rec, VT3_raw_val, VT4_raw_val];
+        if(!isNaN(VITMEAN_val)) {
+            for (i = 0; i < 4; i++) if (isNaN(RVI_final[i])) RVI_final[i] = VITMEAN_val;
+        }
+        let RAWVT_val = NaN;
+        if (VITNUM_raw_count >= 2) RAWVT_val = SUM(RVI_final);
+        results.scores['VT'] = (VITNUM_raw_count >= 2 && !isNaN(RAWVT_val)) ? ((RAWVT_val - 4) / (24 - 4)) * 100 : null;
+        if (results.scores['VT'] !== null) results.scores['VT'] = Math.max(0, Math.min(100, results.scores['VT']));
 
-             let finalSum = 0;
-             itemIndices.forEach(index => {
-                 const rawValue = rawScores[index];
-                 if (rawValue !== null) {
-                     let recodedValue = rawValue;
-                     if (transformation.recode && transformation.recode[index]) {
-                         const recodeMap = transformation.recode[index];
-                          if (recodeMap[rawValue] !== undefined) {
-                              recodedValue = recodeMap[rawValue];
-                          }
-                     }
-                     finalSum += recodedValue;
-                 } else {
-                     // Imputa il valore mancante con la media dei valori ricodificati
-                     finalSum += recodedMean;
-                 }
-             });
+        let SF1_raw_val = getPVal("SF1"); let SF2_raw_val = getPVal("SF2");
+        let RSF_Items_For_Mean_calc = [];
+        let RSF1_rec = NaN; if(!isNaN(SF1_raw_val)) RSF1_rec = 6 - SF1_raw_val;
+        RSF_Items_For_Mean_calc.push(RSF1_rec);
+        RSF_Items_For_Mean_calc.push(SF2_raw_val);
+        let SFNUM_raw_count = N(SF1_raw_val, SF2_raw_val);
+        let SFMEAN_val = MEAN(RSF_Items_For_Mean_calc);
+        let RSF_final = [RSF1_rec, SF2_raw_val];
+        if(!isNaN(SFMEAN_val)) {
+            for (i = 0; i < 2; i++) if (isNaN(RSF_final[i])) RSF_final[i] = SFMEAN_val;
+        }
+        let RAWSF_val = NaN;
+        if (SFNUM_raw_count >= 1) RAWSF_val = SUM(RSF_final);
+        results.scores['SF'] = (SFNUM_raw_count >= 1 && !isNaN(RAWSF_val)) ? ((RAWSF_val - 2) / (10 - 2)) * 100 : null;
+        if (results.scores['SF'] !== null) results.scores['SF'] = Math.max(0, Math.min(100, results.scores['SF']));
 
-             // Trasformazione finale nella scala 0-100
-             const score = ((finalSum - transformation.minSum) / transformation.range) * 100;
-             // Limita il punteggio tra 0 e 100
-             return Math.max(0, Math.min(100, score));
-         }
+        let RM_raw_vals = [getPVal("RE1"), getPVal("RE2"), getPVal("RE3")];
+        let ROLMNUM_count = N(RM_raw_vals);
+        let ROLMMEAN_val = MEAN(RM_raw_vals);
+        let RM_final = [...RM_raw_vals];
+        if(!isNaN(ROLMMEAN_val)) {
+            for (i = 0; i < 3; i++) if (isNaN(RM_final[i])) RM_final[i] = ROLMMEAN_val;
+        }
+        let RAWRE_val = NaN;
+        if (ROLMNUM_count >= 2) RAWRE_val = SUM(RM_final);
+        results.scores['RE'] = (ROLMNUM_count >= 2 && !isNaN(RAWRE_val)) ? ((RAWRE_val - 3) / (6 - 3)) * 100 : null;
+        if (results.scores['RE'] !== null) results.scores['RE'] = Math.max(0, Math.min(100, results.scores['RE']));
 
+        let MH1_raw_val = getPVal("MH1"); let MH2_raw_val = getPVal("MH2"); let MH3_raw_val = getPVal("MH3"); let MH4_raw_val = getPVal("MH4"); let MH5_raw_val = getPVal("MH5");
+        let RMH_Items_For_Mean_calc = [];
+        RMH_Items_For_Mean_calc.push(MH1_raw_val);
+        RMH_Items_For_Mean_calc.push(MH2_raw_val);
+        let RMH3_rec = NaN; if(!isNaN(MH3_raw_val)) RMH3_rec = 7 - MH3_raw_val;
+        RMH_Items_For_Mean_calc.push(RMH3_rec);
+        RMH_Items_For_Mean_calc.push(MH4_raw_val);
+        let RMH5_rec = NaN; if(!isNaN(MH5_raw_val)) RMH5_rec = 7 - MH5_raw_val;
+        RMH_Items_For_Mean_calc.push(RMH5_rec);
+        let MHNUM_raw_count = N(MH1_raw_val, MH2_raw_val, MH3_raw_val, MH4_raw_val, MH5_raw_val);
+        let MHMEAN_val = MEAN(RMH_Items_For_Mean_calc);
+        let RMH_final = [MH1_raw_val, MH2_raw_val, RMH3_rec, MH4_raw_val, RMH5_rec];
+        if (!isNaN(MHMEAN_val)) {
+            for (i = 0; i < 5; i++) if (isNaN(RMH_final[i])) RMH_final[i] = MHMEAN_val;
+        }
+        let RAWMH_val = NaN;
+        if (MHNUM_raw_count >= 3) RAWMH_val = SUM(RMH_final);
+        results.scores['MH'] = (MHNUM_raw_count >=3 && !isNaN(RAWMH_val)) ? ((RAWMH_val - 5) / (30 - 5)) * 100 : null;
+        if (results.scores['MH'] !== null) results.scores['MH'] = Math.max(0, Math.min(100, results.scores['MH']));
 
-         // IMPLEMENTED: Funzione specifica per calcolo BP (Dolore Fisico) - Usa logica standard
-         function calculateBPScore() {
-            const itemIndices = scaleItemIndices['BP']; // [20, 21]
-            const minValidItems = 1; // Need at least one item for BP
+        const htRaw_val = getPVal("HT");
+        results.scores['HT'] = (htRaw_val !== null && !isNaN(htRaw_val) && htRaw_val >= 1 && htRaw_val <= 5) ? ({ 1: 100, 2: 75, 3: 50, 4: 25, 5: 0 })[htRaw_val] : null;
 
-            let validRawValues = [];
-            let rawValue20 = rawScores[20];
-            let rawValue21 = rawScores[21];
-
-            if (rawValue20 !== null) validRawValues.push(rawValue20);
-            if (rawValue21 !== null) validRawValues.push(rawValue21);
-
-            if (validRawValues.length < minValidItems) return null;
-
-            // Recoding maps (standard - higher value = better health)
-            const bp1Recode = { 1: 6, 2: 5.5, 3: 4.2, 4: 3.1, 5: 2.2, 6: 1 }; // Q7: 1=Nessuno(6) ... 6=Molto forte(1)
-            const bp2Recode = { 1: 6, 2: 4.75, 3: 3.5, 4: 2.25, 5: 1 };       // Q8: 1=Per nulla(6) ... 5=Moltissimo(1) (Scala invertita e interpolata)
-
-            let validRecodedValues = [];
-            let recodedVal20 = rawValue20 !== null ? bp1Recode[rawValue20] : null;
-            let recodedVal21 = rawValue21 !== null ? bp2Recode[rawValue21] : null;
-
-            if(recodedVal20 !== null) validRecodedValues.push(recodedVal20);
-            if(recodedVal21 !== null) validRecodedValues.push(recodedVal21);
-
-            // Calculate mean of valid recoded items
-            const recodedMean = validRecodedValues.length > 0
-                              ? validRecodedValues.reduce((a, b) => a + b, 0) / validRecodedValues.length
-                              : 0;
-
-            let finalSum = 0;
-            if (recodedVal20 !== null) finalSum += recodedVal20; else finalSum += recodedMean;
-            if (recodedVal21 !== null) finalSum += recodedVal21; else finalSum += recodedMean;
-
-
-            // Transform to 0-100 scale: (((Sum - MinPossibleSum) / RangeOfSum) * 100)
-            const minPossibleRecodedValue = 1; // Worst score on recoded scale is 1
-            const maxPossibleRecodedValue = 6; // Best score on recoded scale is 6
-            const minSum = itemIndices.length * minPossibleRecodedValue; // 2 * 1 = 2
-            const range = itemIndices.length * (maxPossibleRecodedValue - minPossibleRecodedValue); // 2 * (6 - 1) = 10
-
-            const score = ((finalSum - minSum) / range) * 100;
-            return Math.max(0, Math.min(100, score));
-         }
-
-        // 2. Calcolo Punteggi Scale 0-100 (Logica SPSS/SAS) - Recoding corretto
-        results.scores['PF'] = calculateScaleScore('PF', scaleItemIndices['PF'], 5, { minSum: 10, range: 20, recode: {} }); // No recode needed
-        results.scores['RP'] = calculateScaleScore('RP', scaleItemIndices['RP'], 2, { minSum: 4, range: 4, recode: {} }); // No recode needed
-        results.scores['RE'] = calculateScaleScore('RE', scaleItemIndices['RE'], 2, { minSum: 3, range: 3, recode: {} }); // No recode needed
-
-        const map6ptInvert = { 1: 6, 2: 5, 3: 4, 4: 3, 5: 2, 6: 1 };
-        const map6ptDirect = { 1: 1, 2: 2, 3: 3, 4: 4, 5: 5, 6: 6 };
-        results.scores['VT'] = calculateScaleScore('VT', scaleItemIndices['VT'], 2, { minSum: 4, range: 20, recode: { 22: map6ptDirect, 26: map6ptDirect, 28: map6ptInvert, 30: map6ptInvert } });
-        results.scores['MH'] = calculateScaleScore('MH', scaleItemIndices['MH'], 3, { minSum: 5, range: 25, recode: { 23: map6ptInvert, 24: map6ptInvert, 27: map6ptInvert, 25: map6ptDirect, 29: map6ptDirect } });
-
-        const map5ptInvert = { 1: 5, 2: 4, 3: 3, 4: 2, 5: 1 };
-        const map5ptDirect = { 1: 1, 2: 2, 3: 3, 4: 4, 5: 5 };
-        results.scores['SF'] = calculateScaleScore('SF', scaleItemIndices['SF'], 1, { minSum: 2, range: 8, recode: { 19: map5ptInvert, 31: map5ptInvert } }); // Q10: 1=Sempre interferito (low) -> 1; 5=Mai (high) -> 5. Needs inversion for higher=better.
-
-        results.scores['BP'] = calculateBPScore(); // Use dedicated function for BP
-
-        const gh1RecodeMap = { 1: 5, 2: 4.4, 3: 3.4, 4: 2, 5: 1 }; // Specific for Q1 (1=Exc -> 5)
-        const ghTFRecodeMapInvert = { 1: 5, 2: 4, 3: 3, 4: 2, 5: 1 }; // Invert True/False (1=CV -> 5)
-        const ghTFRecodeMapDirect = { 1: 1, 2: 2, 3: 3, 4: 4, 5: 5 }; // Direct True/False (1=CV -> 1)
-        // Higher value = better health.
-        // Q11a (Ammalarmi): False(5) is better -> Invert needed -> ghTFRecodeMapInvert
-        // Q11b (Salute come altri): True(1) is better -> Direct needed -> ghTFRecodeMapDirect (This item is debated, often dropped, but we follow syntax) -> WAIT, standard recode is {1=5, 2=4, 3=3, 4=2, 5=1}
-        // Q11c (Peggiorando): False(5) is better -> Invert needed -> ghTFRecodeMapInvert
-        // Q11d (Ottima salute): True(1) is better -> Direct needed -> ghTFRecodeMapDirect -> WAIT, standard recode is {1=5, 2=4, 3=3, 4=2, 5=1}
-        results.scores['GH'] = calculateScaleScore('GH', scaleItemIndices['GH'], 3, { minSum: 5, range: 20, recode: {
-            0: gh1RecodeMap,               // Q1: Exc(1)->5
-            32: ghTFRecodeMapInvert,       // Q11a: Ammalarmi CV(1)->1 (Needs Invert -> 5)
-            33: ghTFRecodeMapInvert,       // Q11b: Come altri CV(1)->5 (Needs Invert -> 1) --- Let's use standard {1=5...5=1}
-            34: ghTFRecodeMapInvert,       // Q11c: Peggiorando CV(1)->1 (Needs Invert -> 5)
-            35: ghTFRecodeMapInvert        // Q11d: Ottima salute CV(1)->5 (Needs Invert -> 1) --- Let's use standard {1=5...5=1}
-            }
-        });
-
-        const htRaw = rawScores[1]; results.scores['HT'] = (htRaw !== null && htRaw >= 1 && htRaw <= 5) ? ({ 1: 100, 2: 75, 3: 50, 4: 25, 5: 0 })[htRaw] : null;
-
-
-        // 3. Calcolo Z-Scores (Standardizzazione USA)
         let allScoresValidForSummaries = true;
         for (const scale in usMeans) {
             const score = results.scores[scale];
-            if (score !== null && !isNaN(score)) {
-                results.zScores[scale] = (score - usMeans[scale]) / usSDs[scale];
-            } else {
+            if (score === null || isNaN(score)) { // Check for null specifically for summary calculations
                 results.zScores[scale] = null;
-                allScoresValidForSummaries = false; // If any scale score is null, cannot calculate summaries
+                allScoresValidForSummaries = false;
+            } else {
+                 results.zScores[scale] = (score - usMeans[scale]) / usSDs[scale];
             }
         }
 
-        // 4. Calcolo Indici Sintetici USA (ISF/PCS, ISM/MCS) - UNCOMMENTED & COMPLETED
         results.summaries['PCS'] = null;
         results.summaries['MCS'] = null;
         if (allScoresValidForSummaries) {
             let pcsWeightedSum = 0;
             let mcsWeightedSum = 0;
             for (const scale in weights.PCS) {
-                 if (results.zScores[scale] !== null) { // Double check, though allScoresValidForSummaries should cover this
+                 if (results.zScores[scale] !== null) {
                     pcsWeightedSum += results.zScores[scale] * weights.PCS[scale];
                     mcsWeightedSum += results.zScores[scale] * weights.MCS[scale];
+                 } else { // If any Z-score is null, cannot calculate summaries
+                    allScoresValidForSummaries = false; // Redundant but safe
+                    break;
                  }
             }
-             // Apply T-score transformation: T = (WeightedSum * 10) + 50
-            results.summaries['PCS'] = (pcsWeightedSum * 10) + 50;
-            results.summaries['MCS'] = (mcsWeightedSum * 10) + 50;
+            if(allScoresValidForSummaries) { // Re-check after loop, in case a zScore was null
+                results.summaries['PCS'] = (pcsWeightedSum * 10) + 50;
+                results.summaries['MCS'] = (mcsWeightedSum * 10) + 50;
+            }
         }
 
-
-        // 5. NUOVO: Calcolo Punteggi T Standardizzati per Età/Sesso (ITA)
         const ageNum = parseInt(age);
         const sexNum = parseInt(sex);
         let classeEta = 0;
         let canCalculateAgeSexScores = false;
 
-        // Determina classe di età
         if (!isNaN(ageNum) && ageNum > 0) {
             if (ageNum <= 24) classeEta = 2;
             else if (ageNum <= 34) classeEta = 3;
@@ -539,34 +525,28 @@
             else if (ageNum <= 54) classeEta = 5;
             else if (ageNum <= 64) classeEta = 6;
             else if (ageNum <= 74) classeEta = 7;
-            else classeEta = 8; // > 74
+            else classeEta = 8;
         }
 
-        // Verifica se abbiamo Sesso e Classe Età validi
         if ((sexNum === 1 || sexNum === 2) && classeEta >= 2 && classeEta <= 8) {
              canCalculateAgeSexScores = true;
          }
 
-        // Calcola i punteggi T solo se possibile
         const scalesForAgeSex = ['PF', 'RP', 'BP', 'GH', 'VT', 'SF', 'RE', 'MH'];
         scalesForAgeSex.forEach(scale => {
-            results.ageSexScores[scale] = null; // Inizializza a null
+            results.ageSexScores[scale] = null;
             if (canCalculateAgeSexScores) {
                 const score0100 = results.scores[scale];
-                // Verifica che il punteggio 0-100 sia calcolabile e che esistano norme per questo gruppo
-                if (score0100 !== null && ageSexNorms[sexNum] && ageSexNorms[sexNum][classeEta] && ageSexNorms[sexNum][classeEta][scale]) {
+                if (score0100 !== null && !isNaN(score0100) && ageSexNorms[sexNum] && ageSexNorms[sexNum][classeEta] && ageSexNorms[sexNum][classeEta][scale]) {
                     const norms = ageSexNorms[sexNum][classeEta][scale];
                     const mean = norms.mean;
                     const sd = norms.sd;
-                    // Calcola T-score: T = (((Osservato - MediaNorma) / SDNorma) * 10) + 50
-                    if (sd !== null && sd !== undefined && sd !== 0) { // Evita divisione per zero o undefined sd
+                    if (sd !== null && sd !== undefined && sd !== 0) {
                         results.ageSexScores[scale] = (((score0100 - mean) / sd) * 10) + 50;
                     }
                 }
             }
         });
-
-        // Memorizza dati demografici usati per il calcolo
         demographicData.age = !isNaN(ageNum) ? ageNum : null;
         demographicData.sex = (sexNum === 1 || sexNum === 2) ? sexNum : null;
         demographicData.ageClass = classeEta;
@@ -575,10 +555,6 @@
         return results;
     }
 
-
-    // --- Funzioni Init/Update Grafici ---
-
-    // IMPLEMENTED: Funzione Callback Tooltip
     function tooltipCallback(context) {
         let label = context.dataset.label || '';
         if (label) {
@@ -588,17 +564,16 @@
         const originalScore = context.dataset.originalScores ? context.dataset.originalScores[context.dataIndex] : null;
 
         if (originalScore !== null && originalScore !== 'N/D' && originalScore !== 'N/A' && !isNaN(originalScore)) {
-            label += originalScore.toFixed(1); // Mostra il valore numerico con 1 decimale
+            label += originalScore.toFixed(1);
         } else if (originalScore === 'N/A') {
              label += 'N/A';
         }
          else {
-            label += 'N/D'; // Mostra N/D se il dato originale non è valido
+            label += 'N/D';
         }
         return label;
     }
 
-    // IMPLEMENTED: Init Grafico Scale 0-100
     function initScoresChart() {
         const ctx = document.getElementById('scoresChart').getContext('2d');
         const chartLabels = ['PF', 'RP', 'BP', 'GH', 'VT', 'SF', 'RE', 'MH', 'HT'];
@@ -611,28 +586,27 @@
                 labels: chartDisplayLabels,
                 datasets: [{
                     label: 'Punteggio Scala (0-100)',
-                    data: Array(chartLabels.length).fill(0), // Init with 0
+                    data: Array(chartLabels.length).fill(0),
                     backgroundColor: backgroundColors,
                     borderColor: backgroundColors,
                     borderWidth: 1,
-                    originalScores: Array(chartLabels.length).fill('N/D'), // Store original values for tooltips
-                    scaleKeys: chartLabels // Link data points to scale keys
+                    originalScores: Array(chartLabels.length).fill('N/D'),
+                    scaleKeys: chartLabels
                 }]
             },
             options: {
-                responsive: true, maintainAspectRatio: false, indexAxis: 'x', // Vertical bars
+                responsive: true, maintainAspectRatio: false, indexAxis: 'x',
                 scales: { y: { beginAtZero: true, max: 100, title: { display: true, text: 'Punteggio (0 = Peggiore, 100 = Migliore)' } }, x: {} },
                 plugins: { legend: { display: false }, tooltip: { callbacks: { label: tooltipCallback } } }
             }
         });
     }
 
-    // Init Grafico Indici Sintetici USA (con linea media 50)
     function initSummaryChart() {
          const ctx = document.getElementById('summaryChart').getContext('2d');
          const chartLabels = ['PCS', 'MCS'];
          const chartDisplayLabels = ['Indice Salute Fisica (ISF/PCS)', 'Indice Salute Mentale (ISM/MCS)'];
-         const backgroundColors = ['#3498db', '#2ecc71']; // Blue for PCS, Green for MCS
+         const backgroundColors = ['#3498db', '#2ecc71'];
 
          summaryChartInstance = new Chart(ctx, {
              type: 'bar',
@@ -640,7 +614,7 @@
                  labels: chartDisplayLabels,
                  datasets: [{
                      label: 'Punteggio T (USA)',
-                     data: [0, 0], // Init with 0
+                     data: [0, 0],
                      backgroundColor: backgroundColors,
                      borderColor: backgroundColors,
                      borderWidth: 1,
@@ -657,7 +631,7 @@
                  plugins: {
                      legend: { display: false },
                      tooltip: { callbacks: { label: tooltipCallback } },
-                     annotation: { // Requires chartjs-plugin-annotation
+                     annotation: {
                          annotations: {
                              line1: { type: 'line', yMin: 50, yMax: 50, borderColor: 'grey', borderWidth: 2, borderDash: [6, 6], label: { content: 'Media Pop. USA', display: true, position: 'start', font: {size: 10} } }
                          }
@@ -667,82 +641,6 @@
          });
      }
 
-    // IMPLEMENTED: Init Grafico Z-Scores USA (con linea media 0)
-    function initZScoreChart() {
-        const ctx = document.getElementById('zScoreChart').getContext('2d');
-        const chartLabels = ['PF', 'RP', 'BP', 'GH', 'VT', 'SF', 'RE', 'MH'];
-        const chartDisplayLabels = [ 'Att. Fisica', 'R. Fisico', 'Dolore', 'Salute Gen.', 'Vitalità', 'Funz. Sociale', 'R. Emotivo', 'Salute Mentale' ];
-        const backgroundColors = ['#1abc9c', '#e74c3c', '#f1c40f', '#3498db', '#9b59b6', '#e67e22', '#95a5a6', '#2ecc71']; // Same colors as scores chart
-
-        zScoreChartInstance = new Chart(ctx, {
-            type: 'bar',
-            data: {
-                labels: chartDisplayLabels,
-                datasets: [{
-                    label: 'Z-Score (vs Pop. USA)',
-                    data: Array(chartLabels.length).fill(0),
-                    backgroundColor: backgroundColors,
-                    borderColor: backgroundColors,
-                    borderWidth: 1,
-                    originalScores: Array(chartLabels.length).fill('N/D'),
-                    scaleKeys: chartLabels
-                }]
-            },
-            options: {
-                responsive: true, maintainAspectRatio: false, indexAxis: 'x',
-                scales: {
-                    y: { beginAtZero: false, suggestedMin: -3, suggestedMax: 3, title: { display: true, text: 'Z-Score (Media 0, DS 1)' } }, // Allow negative values
-                    x: {}
-                },
-                plugins: {
-                    legend: { display: false },
-                    tooltip: { callbacks: { label: tooltipCallback } },
-                    annotation: { // Requires chartjs-plugin-annotation
-                        annotations: {
-                            line1: { type: 'line', yMin: 0, yMax: 0, borderColor: 'grey', borderWidth: 2, borderDash: [6, 6], label: { content: 'Media Pop. USA', display: true, position: 'start', font: {size: 10} } }
-                        }
-                    }
-                }
-            }
-        });
-    }
-
-    // NUOVA Init Grafico T-Scores Età/Sesso ITA (con linea media 50)
-    function initAgeSexTScoreChart() {
-         const ctx = document.getElementById('ageSexTScoreChart').getContext('2d');
-         const chartLabels = ['PF', 'RP', 'BP', 'GH', 'VT', 'SF', 'RE', 'MH'];
-         const chartDisplayLabels = [ 'Att. Fisica', 'R. Fisico', 'Dolore', 'Salute Gen.', 'Vitalità', 'Funz. Sociale', 'R. Emotivo', 'Salute Mentale' ];
-         const backgroundColors = ['#1abc9c', '#e74c3c', '#f1c40f', '#3498db', '#9b59b6', '#e67e22', '#95a5a6', '#2ecc71'];
-
-         ageSexTScoreChartInstance = new Chart(ctx, {
-             type: 'bar',
-             data: {
-                 labels: chartDisplayLabels,
-                 datasets: [{
-                     label: 'Punteggio T (Età/Sesso ITA)', data: Array(chartLabels.length).fill(0),
-                     backgroundColor: backgroundColors, borderColor: backgroundColors, borderWidth: 1,
-                     originalScores: Array(chartLabels.length).fill('N/D'), scaleKeys: chartLabels
-                 }]
-             },
-             options: {
-                 responsive: true, maintainAspectRatio: false, indexAxis: 'x',
-                 scales: {
-                     y: { beginAtZero: false, min: 0, max: 100, title: { display: true, text: 'Punteggio T (Media 50, DS 10)' } },
-                     x: {}
-                 },
-                 plugins: {
-                     legend: { display: false }, tooltip: { callbacks: { label: tooltipCallback } },
-                     annotation: {
-                         annotations: {
-                             line1: { type: 'line', yMin: 50, yMax: 50, borderColor: 'grey', borderWidth: 2, borderDash: [6, 6], label: { content: 'Media ITA (Età/Sesso)', display: true, position: 'start', font: {size: 10} } }
-                         }
-                     }
-                 }
-             }
-         });
-     }
-
-    // Helper per aggiornare span nella tabella
     function updateDisplay(elementId, value, naClass = 'na-score', digits = 1) {
         const element = document.getElementById(elementId);
         if (!element) return;
@@ -756,26 +654,22 @@
         }
     }
 
-    // Helper per aggiornare i dati di un grafico
     function updateChartData(chartInstance, dataObject) {
         if (!chartInstance || !dataObject) return;
         const dataset = chartInstance.data.datasets[0];
         dataset.scaleKeys.forEach((key, index) => {
-            // Ensure the index is within the bounds of the data arrays
             if (index < dataset.data.length && index < dataset.originalScores.length) {
                 const value = dataObject[key];
                 if (value !== null && value !== undefined && !isNaN(value)) {
                     dataset.data[index] = value;
-                    dataset.originalScores[index] = value; // Store the valid numeric score
+                    dataset.originalScores[index] = value;
                 } else {
-                    // Check if key exists in dataObject before setting N/D
                     if (dataObject.hasOwnProperty(key)){
-                        dataset.data[index] = 0; // Represent N/D as 0 on the chart visually
-                        dataset.originalScores[index] = 'N/D'; // Keep track that it was N/D
+                        dataset.data[index] = 0;
+                        dataset.originalScores[index] = 'N/D';
                     } else {
-                         // If key doesn't exist (e.g. HT in Z-score chart), handle appropriately
-                         dataset.data[index] = 0; // Or null, depending on chart type
-                         dataset.originalScores[index] = 'N/A'; // Or some other indicator
+                         dataset.data[index] = 0;
+                         dataset.originalScores[index] = 'N/A';
                     }
                 }
             }
@@ -783,80 +677,58 @@
         chartInstance.update();
     }
 
-
-    // --- Funzione Principale & Aggiornamento UI ---
     function updateScoresAndChart() {
-        // Leggi input questionario e valida
-        allAnswers = [];
-        let allInputsValid = true;
+        allAnswers = new Array(36).fill(NaN);
         document.querySelectorAll('.score-input').forEach(input => {
             const index = parseInt(input.getAttribute('data-index'));
-            const { value, valid } = getRawValue(input);
-            allAnswers[index] = value; // Store null if invalid/empty
-            // if (!valid && input.value.trim() !== '') allInputsValid = false; // Consider invalid only if non-empty invalid value entered
+            const { value } = getRawValue(input);
+            allAnswers[index] = value;
         });
 
-        // Leggi input demografici e valida
         const ageInput = document.getElementById('eta');
         const sexInput = document.getElementById('sesso');
-        const { value: ageValue, valid: ageValid } = getRawValue(ageInput);
-        const sexValue = sexInput ? sexInput.value : null; // Select value is string ('1' or '2' or '')
-        const sexValid = sexValue === '1' || sexValue === '2';
+        const { value: ageValue } = getRawValue(ageInput);
+        const sexStrValue = sexInput ? sexInput.value : "";
+        const sexNumValue = (sexStrValue === "1" || sexStrValue === "2") ? parseInt(sexStrValue) : NaN;
 
-        // Calcola tutti i punteggi
-        const results = calculateAllSf36Scores(allAnswers, ageValue, sexValue); // Pass validated age and string sex
+        const results = calculateAllSf36Scores(allAnswers, ageValue, sexNumValue);
 
-        // Aggiorna tabella HTML (scale 0-100, Z-score USA, ISF/ISM USA)
         Object.keys(results.scores).forEach(scale => updateDisplay(`score_${scale.toLowerCase()}`, results.scores[scale], 'na-score'));
-        Object.keys(results.zScores).forEach(scale => updateDisplay(`zscore_${scale.toLowerCase()}`, results.zScores[scale], 'na-score', 2)); // Z-scores with 2 digits
+        Object.keys(results.zScores).forEach(scale => updateDisplay(`zscore_${scale.toLowerCase()}`, results.zScores[scale], 'na-score', 2));
         Object.keys(results.summaries).forEach(summary => updateDisplay(`summary_${summary.toLowerCase()}`, results.summaries[summary], 'na-score'));
-
-        // Aggiorna tabella HTML Punteggi T Età/Sesso ITA
         Object.keys(results.ageSexScores).forEach(scale => updateDisplay(`agesex_${scale.toLowerCase()}`, results.ageSexScores[scale], 'na-score'));
 
-        // Mostra/Nascondi sezione Età/Sesso basato su validità input demografici e calcolo
         const ageSexSection = document.getElementById('age-sex-scores-section');
-        const ageSexChartSection = document.getElementById('age-sex-chart-section');
+        const ageSexChartSection = document.getElementById('age-sex-chart-section'); // This ID is no longer in HTML
         const ageSexWarning = document.getElementById('age-sex-warning');
+
 
         if (demographicData.canCalculateAgeSex) {
             ageSexSection.classList.remove('hidden-section');
-            ageSexChartSection.classList.remove('hidden-section');
+            // ageSexChartSection.classList.remove('hidden-section'); // RIMOSSO
             ageSexWarning.classList.add('hidden-section');
         } else {
-            // Hide section if age/sex cannot be calculated, show warning
             ageSexSection.classList.add('hidden-section');
-            ageSexChartSection.classList.add('hidden-section');
+            // ageSexChartSection.classList.add('hidden-section'); // RIMOSSO
             ageSexWarning.classList.remove('hidden-section');
-            // Ensure displays are N/D if section is hidden
             Object.keys(results.ageSexScores).forEach(scale => updateDisplay(`agesex_${scale.toLowerCase()}`, null, 'na-score'));
         }
 
-
-        // Aggiorna Grafici
-        updateChartData(scoresChartInstance, results.scores);           // Scale 0-100
-        updateChartData(summaryChartInstance, results.summaries);       // ISF/ISM USA
-        updateChartData(zScoreChartInstance, results.zScores);          // Z-Scores USA
-        updateChartData(ageSexTScoreChartInstance, results.ageSexScores); // T-Scores Età/Sesso ITA
-
+        updateChartData(scoresChartInstance, results.scores);
+        updateChartData(summaryChartInstance, results.summaries);
+        // updateChartData(zScoreChartInstance, results.zScores); // RIMOSSO
+        // updateChartData(ageSexTScoreChartInstance, results.ageSexScores); // RIMOSSO
     }
 
-    // --- Event Listener ---
     document.addEventListener('DOMContentLoaded', () => {
-        // Inizializza tutti i grafici
         initScoresChart();
         initSummaryChart();
-        initZScoreChart();
-        initAgeSexTScoreChart(); // Inizializza il nuovo grafico
-
-        // Aggiungi listener agli input (sia questionario che demografici)
+        // initZScoreChart(); // RIMOSSO
+        // initAgeSexTScoreChart(); // RIMOSSO
         document.querySelectorAll('.score-input, .demographic-input').forEach(input => {
             input.addEventListener('input', updateScoresAndChart);
-             // Update on blur as well to catch final validation state
             input.addEventListener('blur', updateScoresAndChart);
         });
-
-        // Calcola all'inizio (con valori vuoti/default)
         updateScoresAndChart();
     });
 

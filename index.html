@@ -54,7 +54,7 @@
 <h1>Calcolatore Punteggio SF-36</h1>
 <p>Inserisci i valori per ciascuna domanda, l'età e il sesso. Verranno calcolati: Punteggi scale 0-100, Z-scores (vs Pop. USA), Indici Sintetici ISF/ISM (T-score USA), e Punteggi T standardizzati per Età e Sesso (vs Pop. Italiana, basati su punteggi 0-100 calcolati).</p>
 <p class="notes warning">Se Età o Sesso non vengono inseriti, i punteggi standardizzati per età/sesso e il relativo grafico non saranno calcolati.</p>
-<p class="notes" style="color:purple; font-weight:bold;">Ver8 - Scoring 0-100 allineato a logica Mario Negri, grafici Z-score e T-score ITA rimossi</p>
+<p class="notes" style="color:purple; font-weight:bold;">Ver8 - Scoring 0-100.</p>
 
 <form id="sf36-form" onsubmit="return false;">
     <h3>Dati Demografici</h3>
@@ -242,6 +242,11 @@
 <div class="chart-container chart-container-small">
     <h2>Grafico Indici Sintetici USA (ISF/PCS, ISM/MCS)</h2>
     <canvas id="summaryChart"></canvas>
+</div>
+
+<div id="credits" style="margin-top: 40px; text-align: center;">
+    <h3>Credits</h3>
+    <p class="notes">Sito basato sul calcolatore dei punteggi del SF36 dell'Istituto di Ricerche Farmacologiche Mario Negri IRCCS.</p>
 </div>
 
 <script>
